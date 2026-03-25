@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-container": "#002150",
+              "on-secondary-fixed-variant": "#006544",
+              "on-background": "#f1f3fc",
+              "surface-tint": "#85adff",
+              "primary-container": "#6e9fff",
+              "background": "#0a0e14",
+              "surface-container-lowest": "#000000",
+              "on-surface-variant": "#a8abb3",
+              "on-error-container": "#ffb2b9",
+              "surface-container": "#151a21",
+              "secondary-fixed": "#69f6b8",
+              "secondary-fixed-dim": "#58e7ab",
+              "on-secondary": "#005a3c",
+              "surface-container-highest": "#20262f",
+              "inverse-on-surface": "#51555c",
+              "inverse-primary": "#005bc4",
+              "surface-dim": "#0a0e14",
+              "on-tertiary-fixed": "#1d0054",
+              "surface-container-high": "#1b2028",
+              "surface-variant": "#20262f",
+              "on-primary-fixed-variant": "#002a62",
+              "on-tertiary": "#31067e",
+              "on-secondary-fixed": "#00452d",
+              "error-dim": "#d73357",
+              "tertiary-container": "#a589f8",
+              "inverse-surface": "#f8f9ff",
+              "on-tertiary-fixed-variant": "#41208e",
+              "tertiary": "#b299ff",
+              "on-error": "#490013",
+              "outline": "#72757d",
+              "tertiary-fixed": "#baa3ff",
+              "primary-dim": "#699cff",
+              "on-secondary-container": "#e1ffec",
+              "on-tertiary-container": "#230062",
+              "surface-bright": "#262c36",
+              "on-surface": "#f1f3fc",
+              "error-container": "#a70138",
+              "secondary-dim": "#58e7ab",
+              "secondary": "#69f6b8",
+              "tertiary-fixed-dim": "#ad92ff",
+              "outline-variant": "#44484f",
+              "on-primary": "#002c66",
+              "primary": "#85adff",
+              "on-primary-fixed": "#000000",
+              "primary-fixed-dim": "#5391ff",
+              "primary-fixed": "#6e9fff",
+              "surface-container-low": "#0f141a",
+              "secondary-container": "#006c49",
+              "tertiary-dim": "#a88cfb",
+              "error": "#ff6e84",
+              "surface": "#0a0e14"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(21, 26, 33, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(114, 117, 125, 0.1);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% -20%, rgba(133, 173, 255, 0.12) 0%, rgba(10, 14, 20, 0) 70%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30">
+<main class="pt-24 pb-24 px-6 max-w-7xl mx-auto hero-gradient">
+<!-- Hero Section -->
+<section class="text-center mb-20 max-w-4xl mx-auto">
+<h1 class="text-5xl md:text-7xl font-headline font-extrabold tracking-tight mb-8 text-on-surface leading-[1.1]">
+            Laboratório de Dados Públicos
+        </h1>
+<p class="text-lg md:text-xl text-on-surface-variant leading-relaxed mb-12 font-light max-w-3xl mx-auto">
+            Explore e visualize dados do Portal de Dados Abertos do Banco Central do Brasil. Consulte informações sobre ativos, crédito, taxas de juros e indicadores financeiros das instituições reguladas.
+        </p>
+<!-- Hero High-Fidelity Visual -->
+<div class="w-full aspect-[21/9] rounded-2xl overflow-hidden glass-card relative mb-24 group">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent mix-blend-overlay"></div>
+<img alt="Visualização de Dados em Rede Neural" class="w-full h-full object-cover opacity-60 scale-105 group-hover:scale-100 transition-transform duration-1000" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCusXiFho4042nBiYm-ebflBcMD3ULZ0J-D4rUPC7ZCTFLRQoYjxBuXm_sKIwN6rODmjRDKpyyUKPmFWNxYt_S9hLVwU96s36w-8dOfVF3PvB5JMByF3gTVseqWl4y6HtNGwnVeb4fc8s6B78sVp66cIkH0jYM2t8r8_ElTmwG8x1t-NKOpv1x8rGCyGnXyBej0plwdbLo0zCatWJHqoU1G5alVGdBgHIJtY917eY4PSp5eIh_llhsLihpMLB0pE11rGXbwMTDvkXP4"/>
+</div>
+</section>
+<!-- Data Grid -->
+<div class="space-y-6">
+<!-- Row 1: 3 cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Card 1 -->
+<div class="glass-card p-8 rounded-xl hover:bg-surface-container-highest transition-all group cursor-pointer border border-white/5">
+<div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="account_balance_wallet" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+<h3 class="text-xl font-bold mb-3 text-on-surface">Ativos e Passivos</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">Visualização em Treemap da composição patrimonial das instituições financeiras brasileiras.</p>
+<span class="text-[10px] font-bold tracking-widest text-primary uppercase">Treemap Visualizer</span>
+</div>
+<!-- Card 2 -->
+<div class="glass-card p-8 rounded-xl hover:bg-surface-container-highest transition-all group cursor-pointer border border-white/5">
+<div class="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-secondary" data-icon="bar_chart">bar_chart</span>
+</div>
+<h3 class="text-xl font-bold mb-3 text-on-surface">Resultado</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">Análise detalhada de performance e lucratividade do setor bancário nacional.</p>
+<span class="text-[10px] font-bold tracking-widest text-secondary uppercase">Ranking</span>
+</div>
+<!-- Card 3 -->
+<div class="glass-card p-8 rounded-xl hover:bg-surface-container-highest transition-all group cursor-pointer border border-white/5">
+<div class="w-12 h-12 bg-tertiary/10 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-tertiary" data-icon="person">person</span>
+</div>
+<h3 class="text-xl font-bold mb-3 text-on-surface">Crédito PF</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">Operações de crédito voltadas para pessoa física</p>
+<span class="text-[10px] font-bold tracking-widest text-tertiary uppercase">Consumer Data</span>
+</div>
+</div>
+<!-- Row 2: 3 cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Card 4 -->
+<div class="glass-card p-8 rounded-xl hover:bg-surface-container-highest transition-all group cursor-pointer border border-white/5">
+<div class="w-12 h-12 bg-tertiary/10 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-tertiary" data-icon="corporate_fare">corporate_fare</span>
+</div>
+<h3 class="text-xl font-bold mb-3 text-on-surface">Crédito PJ</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">Fluxo de capitais e crédito para o setor corporativo e industrial.</p>
+<span class="text-[10px] font-bold tracking-widest text-tertiary uppercase">Enterprise</span>
+</div>
+<!-- Card 5 -->
+<div class="glass-card p-8 rounded-xl hover:bg-surface-container-highest transition-all group cursor-pointer border border-white/5">
+<div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="percent">percent</span>
+</div>
+<h3 class="text-xl font-bold mb-3 text-on-surface">Taxas de Juros</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">Série histórica e comparativos de taxas praticadas por modalidades.</p>
+<span class="text-[10px] font-bold tracking-widest text-primary uppercase">Financial Indicators</span>
+</div>
+<!-- Card 6 -->
+<div class="glass-card p-8 rounded-xl hover:bg-surface-container-highest transition-all group cursor-pointer border border-white/5">
+<div class="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-secondary" data-icon="query_stats">query_stats</span>
+</div>
+<h3 class="text-xl font-bold mb-3 text-on-surface">Índices</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">Principais índices financeiros e de perfomance das entidades reguladas</p>
+<span class="text-[10px] font-bold tracking-widest text-secondary uppercase">Metrics</span>
+</div>
+</div>
+<!-- Row 3: 2 cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Card 7 -->
+<div class="glass-card p-8 rounded-xl hover:bg-surface-container-highest transition-all group cursor-pointer border border-white/5">
+<div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+<div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="map">map</span>
+</div>
+<div>
+<h3 class="text-xl font-bold mb-2 text-on-surface">Crédito Regional</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">Distribuição geográfica da oferta de crédito no território nacional.</p>
+</div>
+</div>
+<div class="mt-6">
+<span class="text-[10px] font-bold tracking-widest text-primary uppercase">Geospatial Distribution</span>
+</div>
+</div>
+<!-- Card 8 -->
+<div class="glass-card p-8 rounded-xl hover:bg-surface-container-highest transition-all group cursor-pointer border border-white/5">
+<div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+<div class="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-secondary" data-icon="public" style="font-variation-settings: 'FILL' 1;">public</span>
+</div>
+<div>
+<h3 class="text-xl font-bold mb-2 text-on-surface">Crédito Total</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">Cartograma com o total de crédito por região do Brasil</p>
+</div>
+</div>
+<div class="mt-6">
+<span class="text-[10px] font-bold tracking-widest text-secondary uppercase">Global Consolidation</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section Transition -->
+</main>
+</body></html>

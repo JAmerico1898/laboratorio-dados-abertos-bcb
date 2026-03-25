@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-border bg-bg-surface">
       <div className="mx-auto max-w-container px-4 py-6">
-        <div className="space-y-1.5 text-center text-xs text-text-muted">
+        <div className="space-y-1.5 text-center text-sm text-text-muted">
           <p>
             Dúvidas? Sugestões?{" "}
             <Link
