@@ -129,13 +129,20 @@ export interface TaxasResponse {
   modalityName: string;
 }
 
+export interface RankingEntry {
+  InstituicaoFinanceira?: string;
+  TaxaJurosAoAno?: number;
+  TaxaJurosAoMes?: number;
+  [key: string]: unknown;
+}
+
 export interface RankingsResponse {
   modalities: Record<
     string,
     {
       name: string;
-      top10: RateRow[];
-      bottom10: RateRow[];
+      top10: RankingEntry[];
+      bottom10: RankingEntry[];
       latestDate: string;
     }
   >;
