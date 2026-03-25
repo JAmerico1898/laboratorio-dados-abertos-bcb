@@ -1,0 +1,175 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Variables — Dark Cyan Financial Terminal Theme ── */
+:root {
+  --bg-primary: #0a0f1a;
+  --bg-card: #111827;
+  --bg-card-hover: #1a2332;
+  --bg-surface: #0d1321;
+  --border-color: rgba(34, 211, 238, 0.12);
+  --border-hover: rgba(34, 211, 238, 0.3);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-cyan: #22d3ee;
+  --accent-cyan-dim: rgba(34, 211, 238, 0.15);
+  --accent-emerald: #34d399;
+  --accent-rose: #fb7185;
+  --accent-amber: #fbbf24;
+  --accent-violet: #a78bfa;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "Space Mono", monospace;
+}
+
+/* ── Base ── */
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+}
+
+/* ── Typography ── */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+/* ── Hub Cards ── */
+@layer components {
+  .hub-card {
+    @apply relative overflow-hidden rounded-card border border-border bg-bg-card p-5;
+    min-height: 170px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .hub-card::before {
+    content: "";
+    @apply absolute left-0 right-0 top-0 h-[2px] opacity-0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--accent-cyan),
+      transparent
+    );
+    transition: opacity 0.3s;
+  }
+  .hub-card:hover {
+    @apply border-border-hover bg-bg-card-hover;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(34, 211, 238, 0.06);
+  }
+  .hub-card:hover::before {
+    opacity: 1;
+  }
+
+  /* ── Variable Selector Cards ── */
+  .var-card {
+    @apply rounded-[14px] border-2 border-border bg-bg-card p-4 text-center;
+    transition: all 0.25s ease;
+  }
+  .var-card.selected {
+    border-color: var(--accent-cyan);
+    background: rgba(34, 211, 238, 0.08);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+  }
+
+  /* ── Segment Pill ── */
+  .seg-pill {
+    @apply inline-block rounded-pill px-3 py-1 font-mono text-[11px] font-bold;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── Badge Variants ── */
+  .badge-treemap {
+    background: rgba(34, 211, 238, 0.12);
+    color: var(--accent-cyan);
+  }
+  .badge-barras {
+    background: rgba(251, 191, 36, 0.12);
+    color: var(--accent-amber);
+  }
+  .badge-cartograma {
+    background: rgba(52, 211, 153, 0.12);
+    color: var(--accent-emerald);
+  }
+  .badge-custom {
+    background: rgba(167, 139, 250, 0.12);
+    color: var(--accent-violet);
+  }
+
+  /* ── Top 20 Table ── */
+  .top20-table {
+    @apply w-full overflow-hidden rounded-[12px] border border-border bg-bg-card;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: var(--font-display);
+  }
+  .top20-table th {
+    @apply border-b border-border bg-bg-surface px-4 py-3.5 text-left font-mono text-[10px] font-bold uppercase tracking-wider;
+    color: var(--accent-cyan);
+  }
+  .top20-table td {
+    @apply px-4 py-3 align-middle text-[13px];
+    border-bottom: 1px solid rgba(34, 211, 238, 0.06);
+  }
+  .top20-table tbody tr:hover {
+    background: rgba(34, 211, 238, 0.06);
+  }
+  .top20-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* ── API Badge ── */
+  .api-badge {
+    @apply mb-4 inline-flex items-center gap-1.5 rounded-pill border border-border px-4 py-1.5 font-mono text-[11px] font-bold tracking-wider;
+    color: var(--accent-cyan);
+    background: var(--accent-cyan-dim);
+  }
+  .api-badge::before {
+    content: "";
+    @apply h-1.5 w-1.5 rounded-full;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px var(--accent-cyan);
+  }
+
+  /* ── Metric Card ── */
+  .metric-card {
+    @apply rounded-[12px] border border-border bg-bg-card p-4;
+  }
+  .metric-value {
+    @apply font-mono text-xl font-bold;
+    color: var(--accent-cyan);
+  }
+  .metric-label {
+    @apply font-display text-xs font-medium uppercase tracking-wider;
+    color: var(--text-muted);
+  }
+}
+
+/* ── Focus Indicators (Accessibility) ── */
+@layer base {
+  *:focus-visible {
+    @apply outline-none;
+    box-shadow: 0 0 0 2px var(--accent-cyan);
+    border-radius: 4px;
+  }
+}
