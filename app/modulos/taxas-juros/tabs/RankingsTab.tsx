@@ -1,10 +1,7 @@
 "use client";
 
-import useSWR from "swr";
 import { SkeletonBox } from "@/components/ui/Skeleton";
 import type { RankingsResponse, RankingEntry } from "@/lib/types";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 function RankingTable({
   rows,
@@ -13,6 +10,9 @@ function RankingTable({
   rows: RankingEntry[];
   color: string;
 }) {
+  if (rows.length === 0) {
+    return <p className="text-sm text-text-muted">Sem dados</p>;
+  }
   return (
     <table className="top20-table">
       <thead>
@@ -31,7 +31,10 @@ function RankingTable({
             <td className="text-sm font-bold text-text-primary">
               {String(row.InstituicaoFinanceira ?? "—")}
             </td>
-            <td className="text-right font-mono text-sm font-bold" style={{ color }}>
+            <td
+              className="text-right font-mono text-sm font-bold"
+              style={{ color }}
+            >
               {Number(row.TaxaJurosAoAno ?? 0).toFixed(2)}
             </td>
           </tr>
@@ -41,19 +44,30 @@ function RankingTable({
   );
 }
 
-export default function RankingsTab() {
-  const { data, isLoading } = useSWR<RankingsResponse>(
-    "/api/taxas/rankings",
-    fetcher,
-    { revalidateOnFocus: false, dedupingInterval: 300000 }
-  );
+interface RankingsTabProps {
+  data: RankingsResponse | null;
+  isLoading: boolean;
+  error: string | null;
+}
 
+export default function RankingsTab({ data, isLoading, error }: RankingsTabProps) {
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
+        <p className="animate-pulse text-sm text-text-muted">
+          Carregando rankings de taxas de juros...
+        </p>
         {Array.from({ length: 3 }).map((_, i) => (
           <SkeletonBox key={i} className="h-64" />
         ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-accent-rose/30 bg-accent-rose/10 p-4 text-sm text-accent-rose">
+        Erro ao carregar rankings: {error}
       </div>
     );
   }
@@ -66,34 +80,52 @@ export default function RankingsTab() {
     );
   }
 
+  const firstMod = Object.values(data.modalities)[0];
+  const refDate = firstMod?.latestDate
+    ? new Date(firstMod.latestDate).toLocaleDateString("pt-BR")
+    : "";
+
   return (
     <div className="space-y-8">
+      {refDate && (
+        <p className="font-mono text-xs text-text-muted">
+          📅 Data de referência:{" "}
+          <span className="font-bold text-accent-cyan">{refDate}</span>
+        </p>
+      )}
+
       {Object.entries(data.modalities).map(([slug, mod]) => {
         if (mod.top10.length === 0 && mod.bottom10.length === 0) return null;
+        const totalIFs = new Set([
+          ...mod.top10.map((r) => r.InstituicaoFinanceira),
+          ...mod.bottom10.map((r) => r.InstituicaoFinanceira),
+        ]).size;
+
         return (
           <div key={slug}>
-            <div className="mb-2 flex items-baseline gap-2">
+            <div className="mb-3 flex items-baseline gap-2">
               <h3 className="text-base font-bold text-text-primary">
                 {mod.name}
               </h3>
               <span className="text-xs text-text-muted">
-                ({mod.top10.length + mod.bottom10.length} IFs)
+                ({totalIFs} IFs)
               </span>
             </div>
-            {mod.latestDate && (
-              <p className="mb-3 font-mono text-xs text-text-muted">
-                📅 Data: {mod.latestDate}
-              </p>
-            )}
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <p className="mb-2 text-sm font-semibold" style={{ color: "#fb7185" }}>
+                <p
+                  className="mb-2 text-sm font-semibold"
+                  style={{ color: "#fb7185" }}
+                >
                   ▲ Maiores Taxas
                 </p>
                 <RankingTable rows={mod.bottom10} color="#fb7185" />
               </div>
               <div>
-                <p className="mb-2 text-sm font-semibold" style={{ color: "#34d399" }}>
+                <p
+                  className="mb-2 text-sm font-semibold"
+                  style={{ color: "#34d399" }}
+                >
                   ▼ Menores Taxas
                 </p>
                 <RankingTable rows={mod.top10} color="#34d399" />

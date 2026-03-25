@@ -10,6 +10,7 @@ import {
 import { getLastNQuarters } from "@/lib/formatting";
 import {
   RELATORIO_RESUMO,
+  RELATORIO_ATIVO,
   RELATORIO_RESULTADO,
   INDICES,
 } from "@/lib/constants";
@@ -83,9 +84,36 @@ export async function GET(request: NextRequest) {
     }
 
     case "provisoes_pct_carteira": {
-      const provisoes = toMap(await getVar("Provisões", RELATORIO_RESUMO));
-      const credito = toMap(await getVar("Carteira de Crédito", RELATORIO_RESUMO));
-      result = computeRatio(provisoes, credito, institutions, segments, 100);
+      // Provisões = Perda Esperada (e2) + Perda Esperada (g2) from Ativo report
+      // Denominator = Operações de Crédito (e) + Outras Op. Crédito (g) from Ativo report
+      const perdaE2 = toMap(await getVar("Perda Esperada \n(e2)", RELATORIO_ATIVO));
+      const perdaG2 = toMap(await getVar("Perda Esperada \n(g2)", RELATORIO_ATIVO));
+      const opCredE = toMap(await getVar("Operações de Crédito \n(e)", RELATORIO_ATIVO));
+      const opCredG = toMap(
+        await getVar(
+          "Outras Operações com Características de Concessão de Crédito \n(g)",
+          RELATORIO_ATIVO
+        )
+      );
+
+      // Sum numerator and denominator per institution
+      const instBase = await buildInstitutionTable(quarter);
+      const instMap = new Map(instBase.map((i) => [i.CodInst, i]));
+      result = [];
+      for (const [codInst, inst] of instMap) {
+        const num = Math.abs(perdaE2.get(codInst) ?? 0) + Math.abs(perdaG2.get(codInst) ?? 0);
+        const den = Math.abs(opCredE.get(codInst) ?? 0) + Math.abs(opCredG.get(codInst) ?? 0);
+        if (den === 0) continue;
+        const value = (num / den) * 100;
+        if (!isFinite(value)) continue;
+        if (segments.length > 0 && !segments.includes(inst.Segmento)) continue;
+        result.push({
+          CodInst: codInst,
+          NomeReduzido: inst.NomeReduzido,
+          Segmento: inst.Segmento,
+          value,
+        });
+      }
       break;
     }
 

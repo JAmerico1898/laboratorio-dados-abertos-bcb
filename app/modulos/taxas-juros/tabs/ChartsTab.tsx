@@ -25,7 +25,7 @@ export default function ChartsTab() {
     const byDate = new Map<string, number[]>();
     for (const r of data.rates) {
       const dateStr = String(
-        r.data ?? r.Data ?? r.InicioPeriodo ?? r.Mes ?? ""
+        r._date ?? r.InicioPeriodo ?? r.Mes ?? ""
       );
       if (!dateStr) continue;
       const rate = Number(r.TaxaJurosAoAno ?? 0);
@@ -101,13 +101,13 @@ export default function ChartsTab() {
                 paper_bgcolor: "transparent",
                 plot_bgcolor: "transparent",
                 font: {
-                  family: "Space Grotesk",
+                  family: "Space Grotesk, Arial, Helvetica, sans-serif",
                   color: "#94a3b8",
                 },
                 margin: { l: 50, r: 20, t: 40, b: 40 },
                 title: {
                   text: `Mediana das Taxas: ${modName}`,
-                  font: { size: 13, color: "#f1f5f9" },
+                  font: { size: 15, color: "#f1f5f9", family: "Space Grotesk, Arial, Helvetica, sans-serif" },
                 },
                 xaxis: {
                   gridcolor: "rgba(148,163,184,0.07)",
@@ -122,7 +122,7 @@ export default function ChartsTab() {
                 hoverlabel: {
                   bgcolor: "#1a1a2e",
                   bordercolor: "rgba(34,211,238,0.3)",
-                  font: { color: "#f1f5f9", family: "Space Grotesk" },
+                  font: { color: "#f1f5f9", family: "Space Grotesk, Arial, Helvetica, sans-serif" },
                 },
                 autosize: true,
               }}

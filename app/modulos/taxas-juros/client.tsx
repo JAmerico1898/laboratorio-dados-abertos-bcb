@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import RankingsTab from "./tabs/RankingsTab";
 import BankTab from "./tabs/BankTab";
 import ChartsTab from "./tabs/ChartsTab";
+import type { RankingsResponse } from "@/lib/types";
 
 const TABS = [
   { key: "rankings", label: "📊 Ranking" },
@@ -13,6 +14,28 @@ const TABS = [
 
 export default function TaxasJurosClient() {
   const [activeTab, setActiveTab] = useState("rankings");
+
+  // Only fetch the batch rankings endpoint — it's fast (~5s) and
+  // contains top/bottom 10 for all modalities
+  const [rankingsData, setRankingsData] = useState<RankingsResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/taxas/rankings")
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((d) => {
+        setRankingsData(d);
+        setIsLoading(false);
+      })
+      .catch((e) => {
+        setError(e.message);
+        setIsLoading(false);
+      });
+  }, []);
 
   return (
     <>
@@ -33,7 +56,9 @@ export default function TaxasJurosClient() {
         ))}
       </div>
 
-      {activeTab === "rankings" && <RankingsTab />}
+      {activeTab === "rankings" && (
+        <RankingsTab data={rankingsData} isLoading={isLoading} error={error} />
+      )}
       {activeTab === "bank" && <BankTab />}
       {activeTab === "charts" && <ChartsTab />}
     </>

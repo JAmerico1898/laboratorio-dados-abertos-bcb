@@ -4,13 +4,25 @@ import { MODALITIES } from "@/lib/constants";
 
 export const runtime = "nodejs";
 
+/** Normalize a date value (Date object, string, or number) to ISO date string YYYY-MM-DD */
+function toISODate(val: unknown): string {
+  if (!val) return "";
+  if (val instanceof Date) return val.toISOString().slice(0, 10);
+  const s = String(val);
+  // Already ISO format
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  // Try parsing as date
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  return s;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { slug: string } }
 ) {
   const { slug } = params;
 
-  // Find modality definition
   const modality = MODALITIES.find((m) => m.slug === slug);
   if (!modality) {
     return NextResponse.json({ error: `Unknown modality: ${slug}` }, { status: 400 });
@@ -27,16 +39,21 @@ export async function GET(
     );
   }
 
-  // Find the latest date in the dataset
-  const dates = rows
-    .map((r) => String(r.data ?? r.Data ?? ""))
-    .filter(Boolean)
-    .sort();
+  // Normalize date columns to YYYY-MM-DD strings
+  const dateCol = type === "monthly" ? "Mes" : "InicioPeriodo";
+  const normalizedRows = rows.map((r) => ({
+    ...r,
+    _date: toISODate(r[dateCol]),
+  }));
+
+  // Find latest date
+  const dates = [...new Set(normalizedRows.map((r) => r._date).filter(Boolean))].sort();
   const latestDate = dates[dates.length - 1] ?? "";
 
+  // Return rows with normalized _date field for client-side filtering
   return NextResponse.json(
     {
-      rates: rows,
+      rates: normalizedRows,
       latestDate,
       modalityName: modality.name,
     },

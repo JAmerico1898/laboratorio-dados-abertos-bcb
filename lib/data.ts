@@ -64,9 +64,18 @@ export async function readParquet<T = Record<string, unknown>>(
     buffer.byteOffset + buffer.byteLength
   );
 
-  const rows = await parquetReadObjects({
+  const rawRows = await parquetReadObjects({
     file: { byteLength: arrayBuffer.byteLength, slice: (start: number, end?: number) => arrayBuffer.slice(start, end) },
     columns,
+  });
+
+  // Convert BigInt values to Number (Parquet can contain BigInt fields like cnpj8)
+  const rows = rawRows.map((row: Record<string, unknown>) => {
+    const converted: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(row)) {
+      converted[key] = typeof val === "bigint" ? Number(val) : val;
+    }
+    return converted;
   }) as T[];
 
   cache.set(cacheKey, rows);

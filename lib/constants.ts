@@ -538,21 +538,22 @@ export const INDICES: IndexDef[] = [
 // ─────────────────────────────────────────────
 // MODULE 5: TAXAS DE JUROS — Modalities
 // ─────────────────────────────────────────────
+// Slugs MUST match actual Parquet filenames (produced by Python slugify on full modality name)
 export const MODALITIES: ModalityDef[] = [
-  { slug: "financiamento_imobiliario_com_taxas_reguladas_-_pre-fixado", name: "Financiamento Imobiliário Pré-fixado", type: "monthly", excludeFromRanking: true },
-  { slug: "financiamento_imobiliario_com_taxas_de_mercado_-_pre-fixado", name: "Financiamento Imobiliário Mercado Pré-fixado", type: "monthly", excludeFromRanking: true },
-  { slug: "credito_pessoal_consignado_publico", name: "Consignado Público", type: "daily", excludeFromRanking: false },
-  { slug: "credito_pessoal_consignado_inss", name: "Consignado INSS", type: "daily", excludeFromRanking: false },
-  { slug: "credito_pessoal_consignado_privado", name: "Consignado Privado", type: "daily", excludeFromRanking: false },
-  { slug: "credito_pessoal_nao_consignado", name: "Crédito Pessoal Não-Consignado", type: "daily", excludeFromRanking: false },
-  { slug: "aquisicao_de_veiculos", name: "Aquisição de Veículos", type: "daily", excludeFromRanking: false },
-  { slug: "cheque_especial", name: "Cheque Especial", type: "daily", excludeFromRanking: false },
-  { slug: "cartao_de_credito_rotativo", name: "Cartão de Crédito Rotativo", type: "daily", excludeFromRanking: true },
-  { slug: "cartao_de_credito_parcelado", name: "Cartão de Crédito Parcelado", type: "daily", excludeFromRanking: true },
-  { slug: "capital_de_giro_com_prazo_de_ate_365_dias", name: "Capital de Giro até 365 dias", type: "daily", excludeFromRanking: false },
-  { slug: "capital_de_giro_com_prazo_superior_a_365_dias", name: "Capital de Giro acima de 365 dias", type: "daily", excludeFromRanking: false },
-  { slug: "conta_garantida", name: "Conta Garantida", type: "daily", excludeFromRanking: true },
-  { slug: "desconto_de_duplicatas", name: "Desconto de Duplicatas", type: "daily", excludeFromRanking: true },
+  { slug: "financiamento_imobiliario_com_taxas_reguladas_prefixado", name: "Financ. Imobiliário Regulado Pré", type: "monthly", excludeFromRanking: true },
+  { slug: "financiamento_imobiliario_com_taxas_de_mercado_prefixado", name: "Financ. Imobiliário Mercado Pré", type: "monthly", excludeFromRanking: true },
+  { slug: "credito_pessoal_consignado_publico_prefixado", name: "Consignado Público", type: "daily", excludeFromRanking: false },
+  { slug: "credito_pessoal_consignado_inss_prefixado", name: "Consignado INSS", type: "daily", excludeFromRanking: false },
+  { slug: "credito_pessoal_consignado_privado_prefixado", name: "Consignado Privado", type: "daily", excludeFromRanking: false },
+  { slug: "credito_pessoal_nao_consignado_prefixado", name: "Crédito Pessoal Não-Consignado", type: "daily", excludeFromRanking: false },
+  { slug: "aquisicao_de_veiculos_prefixado", name: "Aquisição de Veículos", type: "daily", excludeFromRanking: false },
+  { slug: "cheque_especial_prefixado", name: "Cheque Especial", type: "daily", excludeFromRanking: false },
+  { slug: "cartao_de_credito_rotativo_total_prefixado", name: "Cartão de Crédito Rotativo", type: "daily", excludeFromRanking: true },
+  { slug: "cartao_de_credito_parcelado_prefixado", name: "Cartão de Crédito Parcelado", type: "daily", excludeFromRanking: true },
+  { slug: "capital_de_giro_com_prazo_ate_365_dias_prefixado", name: "Capital de Giro até 365 dias", type: "daily", excludeFromRanking: false },
+  { slug: "capital_de_giro_com_prazo_superior_a_365_dias_prefixado", name: "Capital de Giro acima de 365 dias", type: "daily", excludeFromRanking: false },
+  { slug: "conta_garantida_prefixado", name: "Conta Garantida", type: "daily", excludeFromRanking: true },
+  { slug: "desconto_de_duplicatas_prefixado", name: "Desconto de Duplicatas", type: "daily", excludeFromRanking: true },
 ];
 
 // ─────────────────────────────────────────────

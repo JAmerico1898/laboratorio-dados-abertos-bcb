@@ -8,40 +8,53 @@ export async function POST(request: NextRequest) {
 
   if (!message || !type) {
     return NextResponse.json(
-      { error: "Message and type are required" },
+      { error: "Mensagem e tipo são obrigatórios." },
       { status: 400 }
     );
   }
 
-  // Send to Pushover if configured
-  const pushoverToken = process.env.PUSHOVER_API_TOKEN;
-  const pushoverUser = process.env.PUSHOVER_USER_KEY;
+  // Match env var names from laboratorio-derivativos
+  const token = process.env.PUSHOVER_TOKEN ?? process.env.PUSHOVER_API_TOKEN;
+  const user = process.env.PUSHOVER_USER ?? process.env.PUSHOVER_USER_KEY;
 
-  if (pushoverToken && pushoverUser) {
-    try {
-      const pushoverMessage = [
-        `[LDP Feedback] ${type}`,
-        name ? `De: ${name}` : "",
-        email ? `Email: ${email}` : "",
-        `\n${message}`,
-      ]
-        .filter(Boolean)
-        .join("\n");
-
-      await fetch("https://api.pushover.net/1/messages.json", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: pushoverToken,
-          user: pushoverUser,
-          message: pushoverMessage,
-          title: "LDP Feedback",
-        }),
-      });
-    } catch (err) {
-      console.error("Pushover notification failed:", err);
-    }
+  if (!token || !user) {
+    return NextResponse.json(
+      { error: "Serviço indisponível (credenciais não configuradas)." },
+      { status: 500 }
+    );
   }
 
-  return NextResponse.json({ success: true });
+  const lines = [
+    `Contato — Lab Dados Públicos`,
+    `Tipo: ${type}`,
+    name ? `Nome: ${name}` : null,
+    email ? `Email: ${email}` : null,
+    "",
+    message.trim(),
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const pushBody = new URLSearchParams();
+  pushBody.append("token", token);
+  pushBody.append("user", user);
+  pushBody.append("title", `Lab Dados Públicos — ${type}`);
+  pushBody.append("message", lines);
+
+  const res = await fetch("https://api.pushover.net/1/messages.json", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: pushBody.toString(),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    console.error("Pushover failed:", res.status, detail);
+    return NextResponse.json(
+      { error: "Falha ao enviar mensagem." },
+      { status: 502 }
+    );
+  }
+
+  return NextResponse.json({ ok: true });
 }

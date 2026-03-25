@@ -114,7 +114,7 @@ export default function TreemapChart({
           paper_bgcolor: "transparent",
           plot_bgcolor: "transparent",
           font: {
-            family: "Space Grotesk, sans-serif",
+            family: "Space Grotesk, Arial, Helvetica, sans-serif",
             color: "#f1f5f9",
             size: 12,
           },
@@ -123,7 +123,7 @@ export default function TreemapChart({
             bordercolor: "rgba(34,211,238,0.3)",
             font: {
               color: "#f1f5f9",
-              family: "Space Grotesk, sans-serif",
+              family: "Space Grotesk, Arial, Helvetica, sans-serif",
               size: 13,
             },
           },

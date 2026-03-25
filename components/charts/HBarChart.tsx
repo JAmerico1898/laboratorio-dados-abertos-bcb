@@ -36,7 +36,7 @@ export default function HBarChart({ data, format }: HBarChartProps) {
     format === "currency" ? formatBRL(d.value) : `${d.value.toFixed(1)}%`
   );
 
-  const height = Math.max(400, top20.length * 32);
+  const height = Math.max(400, top20.length * 36);
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height }}>
@@ -45,12 +45,12 @@ export default function HBarChart({ data, format }: HBarChartProps) {
           {
             type: "bar",
             orientation: "h",
-            y: chartData.map((d) => d.NomeReduzido),
+            y: chartData.map((d) => d.NomeReduzido.toUpperCase()),
             x: chartData.map((d) => d.value),
             marker: { color: colors, cornerradius: 4 },
             text: textVals,
             textposition: "outside",
-            textfont: { size: 11, family: "Space Mono", color: "#94a3b8" },
+            textfont: { size: 11, family: "Space Mono, Consolas, monospace", color: "#94a3b8" },
             cliponaxis: false,
             hovertemplate:
               format === "currency"
@@ -61,22 +61,24 @@ export default function HBarChart({ data, format }: HBarChartProps) {
         layout={{
           paper_bgcolor: "transparent",
           plot_bgcolor: "transparent",
-          font: { family: "Space Grotesk", color: "#f1f5f9" },
-          margin: { l: 10, r: 150, t: 10, b: 10 },
+          font: { family: "Space Grotesk, Arial, Helvetica, sans-serif", color: "#f1f5f9" },
+          margin: { l: 200, r: 80, t: 10, b: 10 },
           height,
           autosize: true,
           yaxis: {
             gridcolor: "rgba(148,163,184,0.05)",
-            tickfont: { size: 12 },
+            tickfont: { size: 12, family: "Space Grotesk, Arial, Helvetica, sans-serif" },
+            automargin: true,
           },
           xaxis: {
             gridcolor: "rgba(148,163,184,0.07)",
             showline: false,
+            zeroline: false,
           },
           hoverlabel: {
             bgcolor: "#1a1a2e",
             bordercolor: "rgba(34,211,238,0.3)",
-            font: { color: "#f1f5f9", family: "Space Grotesk", size: 13 },
+            font: { color: "#f1f5f9", family: "Space Grotesk, Arial, Helvetica, sans-serif", size: 13 },
           },
           showlegend: false,
         }}

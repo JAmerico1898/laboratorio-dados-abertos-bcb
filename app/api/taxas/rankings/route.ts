@@ -1,64 +1,70 @@
 import { NextResponse } from "next/server";
-import { readTaxas } from "@/lib/data";
-import { MODALITIES } from "@/lib/constants";
+import { readFileSync, existsSync } from "fs";
+import { join } from "path";
 
 export const runtime = "nodejs";
 
+const DATA_DIR = join(process.cwd(), "data");
+
+interface ModEntry {
+  bank: string;
+  rateYear: number;
+  rateMonth: number;
+  rank: number;
+}
+
+interface ModData {
+  name: string;
+  latestDate: string;
+  total: number;
+  excludeFromRanking: boolean;
+  entries: ModEntry[];
+}
+
 /**
  * Batch rankings endpoint.
- * Returns top 10 and bottom 10 institutions for all non-excluded modalities
- * based on the latest date in each dataset.
- *
- * This avoids N parallel client requests on the Rankings tab.
+ * Reads from pre-computed taxas_latest.json — instant response.
  */
 export async function GET() {
-  const rankingModalities = MODALITIES.filter((m) => !m.excludeFromRanking);
+  const filePath = join(DATA_DIR, "taxas_latest.json");
+  if (!existsSync(filePath)) {
+    return NextResponse.json({ modalities: {} });
+  }
+
+  const data = JSON.parse(readFileSync(filePath, "utf-8"));
 
   const modalities: Record<
     string,
     {
       name: string;
-      top10: Record<string, unknown>[];
-      bottom10: Record<string, unknown>[];
+      top10: { InstituicaoFinanceira: string; TaxaJurosAoAno: number }[];
+      bottom10: { InstituicaoFinanceira: string; TaxaJurosAoAno: number }[];
       latestDate: string;
     }
   > = {};
 
-  for (const mod of rankingModalities) {
-    const rows = await readTaxas(mod.slug, mod.type);
-    if (rows.length === 0) {
-      modalities[mod.slug] = {
-        name: mod.name,
-        top10: [],
-        bottom10: [],
-        latestDate: "",
-      };
-      continue;
-    }
+  for (const [slug, mod] of Object.entries(data.modalities) as [string, ModData][]) {
+    if (mod.excludeFromRanking) continue;
 
-    // Find the latest date
-    const dates = rows
-      .map((r) => String(r.data ?? r.Data ?? ""))
-      .filter(Boolean)
-      .sort();
-    const latestDate = dates[dates.length - 1] ?? "";
+    // entries are already sorted ascending by rate (rank 1 = lowest)
+    const top10 = mod.entries.slice(0, 10).map((e) => ({
+      InstituicaoFinanceira: e.bank,
+      TaxaJurosAoAno: e.rateYear,
+    }));
 
-    // Filter to latest date only
-    const latestRows = rows.filter(
-      (r) => String(r.data ?? r.Data ?? "") === latestDate
-    );
+    const bottom10 = mod.entries
+      .slice(-10)
+      .reverse()
+      .map((e) => ({
+        InstituicaoFinanceira: e.bank,
+        TaxaJurosAoAno: e.rateYear,
+      }));
 
-    // Sort by annual rate (ascending = lowest rates first)
-    const rateKey = "TaxaJurosAoAno";
-    const sorted = latestRows
-      .filter((r) => r[rateKey] != null && Number(r[rateKey]) > 0)
-      .sort((a, b) => Number(a[rateKey]) - Number(b[rateKey]));
-
-    modalities[mod.slug] = {
+    modalities[slug] = {
       name: mod.name,
-      top10: sorted.slice(0, 10), // lowest rates (best for consumer)
-      bottom10: sorted.slice(-10).reverse(), // highest rates
-      latestDate,
+      top10,
+      bottom10,
+      latestDate: mod.latestDate,
     };
   }
 
