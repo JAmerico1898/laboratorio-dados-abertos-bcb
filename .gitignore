@@ -21,6 +21,8 @@
 *.pem
 .superpowers/
 .claude/
+.agents/
+skills-lock.json
 
 # debug
 npm-debug.log*
