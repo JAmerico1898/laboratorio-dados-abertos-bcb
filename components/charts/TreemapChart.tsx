@@ -9,6 +9,7 @@ import type { Segment } from "@/lib/types";
 interface TreemapChartProps {
   data: InstitutionRow[];
   total: number;
+  systemTotal: number;
   variableLabel: string;
   /** Use absolute values for treemap sizing (for DRE which can be negative) */
   useAbsValues?: boolean;
@@ -17,6 +18,7 @@ interface TreemapChartProps {
 export default function TreemapChart({
   data,
   total,
+  systemTotal,
   variableLabel,
   useAbsValues = false,
 }: TreemapChartProps) {
@@ -35,7 +37,9 @@ export default function TreemapChart({
   const colors: string[] = [];
   const hovertext: string[] = [];
 
-  const rootLabel = "(?)";
+  const selectionPct = systemTotal > 0 ? (total / systemTotal) * 100 : 0;
+  const rootLabel = `Segmentos selecionados: ${selectionPct.toFixed(1)}% do sistema`;
+
   // Collect unique segments in data
   const segments = [...new Set(data.map((d) => d.Segmento))].sort();
 
@@ -51,14 +55,13 @@ export default function TreemapChart({
   // Add segment parent nodes
   for (const seg of segments) {
     const segTotal = segTotals.get(seg) ?? 0;
-    const pctOfTotal = total > 0 ? (segTotal / total) * 100 : 0;
+    const pctOfSystem = systemTotal > 0 ? (segTotal / systemTotal) * 100 : 0;
     labels.push(seg);
     parents.push(rootLabel);
     values.push(segTotal);
     colors.push(SEGMENT_COLORS[seg as Segment] ?? "#64748b");
-    // Segment hover: name + % do total (issue #3)
     hovertext.push(
-      `<b>${seg}</b><br>${pctOfTotal.toFixed(1)}% do total`
+      `<b>${seg}</b><br>${formatBRL(segTotal)}<br>${pctOfSystem.toFixed(1)}% do sistema`
     );
   }
 
@@ -66,8 +69,7 @@ export default function TreemapChart({
   const sorted = [...data].sort((a, b) => Math.abs(b.Saldo) - Math.abs(a.Saldo));
   sorted.forEach((inst, i) => {
     const val = useAbsValues ? Math.abs(inst.Saldo) : inst.Saldo;
-    const pctOfTotal = total > 0 ? (Math.abs(inst.Saldo) / total) * 100 : 0;
-    // % of segment (issue #4)
+    const pctOfSystem = systemTotal > 0 ? (Math.abs(inst.Saldo) / systemTotal) * 100 : 0;
     const segTotal = segTotals.get(inst.Segmento) ?? 0;
     const pctOfSegment = segTotal > 0 ? (Math.abs(inst.Saldo) / segTotal) * 100 : 0;
 
@@ -75,12 +77,11 @@ export default function TreemapChart({
     parents.push(inst.Segmento);
     values.push(Math.abs(val));
     colors.push(SEGMENT_COLORS[inst.Segmento as Segment] ?? "#64748b");
-    // Bank hover: name, rank, value, % total, % segment (issue #4)
     hovertext.push(
       `<b>${inst.NomeReduzido}</b><br>` +
       `Rank: ${i + 1}º<br>` +
       `${formatBRL(inst.Saldo)}<br>` +
-      `${pctOfTotal.toFixed(2)}% do total<br>` +
+      `${pctOfSystem.toFixed(2)}% do sistema<br>` +
       `${pctOfSegment.toFixed(1)}% do segmento`
     );
   });

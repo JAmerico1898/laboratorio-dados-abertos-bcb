@@ -117,6 +117,8 @@ export interface QuarterResponse {
 export interface IFDataResponse {
   institutions: InstitutionRow[];
   total: number;
+  /** Total do Sistema Financeiro Nacional (all segments, before filtering) */
+  systemTotal: number;
   count: number;
   top5Share: number;
   quarter: number;

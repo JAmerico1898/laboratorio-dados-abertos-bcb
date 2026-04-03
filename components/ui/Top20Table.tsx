@@ -7,6 +7,8 @@ import SegmentPill from "./SegmentPill";
 interface Top20TableProps {
   data: InstitutionRow[];
   total: number;
+  /** Total do Sistema Financeiro Nacional (all segments) */
+  systemTotal: number;
   /** Label for the value column */
   valueLabel?: string;
 }
@@ -16,6 +18,7 @@ const MEDALS = ["🏆", "🥈", "🥉"];
 export default function Top20Table({
   data,
   total,
+  systemTotal,
   valueLabel = "Valor",
 }: Top20TableProps) {
   const top20 = data.slice(0, 20);
@@ -34,12 +37,12 @@ export default function Top20Table({
             <th scope="col">Instituição</th>
             <th scope="col" className="w-24">Segmento</th>
             <th scope="col" className="w-36 text-right">{valueLabel.toUpperCase()}</th>
-            <th scope="col" className="w-44 text-right">% TOTAL</th>
+            <th scope="col" className="w-44 text-right">% SISTEMA</th>
           </tr>
         </thead>
         <tbody>
           {top20.map((inst, i) => {
-            const pct = total > 0 ? (Math.abs(inst.Saldo) / total) * 100 : 0;
+            const pct = systemTotal > 0 ? (Math.abs(inst.Saldo) / systemTotal) * 100 : 0;
             const barWidth = maxSaldo > 0 ? (Math.abs(inst.Saldo) / maxSaldo) * 100 : 0;
             return (
               <tr key={inst.CodInst}>

@@ -73,6 +73,7 @@ export default function TreemapModule({
         <>
           <SummaryMetrics
             total={data.total}
+            systemTotal={data.systemTotal}
             count={data.count}
             top5Share={data.top5Share}
             quarterLabel={quarterLabel}
@@ -81,6 +82,7 @@ export default function TreemapModule({
           <TreemapChart
             data={data.institutions}
             total={data.total}
+            systemTotal={data.systemTotal}
             variableLabel={currentVar.label}
             useAbsValues={useAbsValues}
           />
@@ -92,6 +94,7 @@ export default function TreemapModule({
             <Top20Table
               data={data.institutions}
               total={data.total}
+              systemTotal={data.systemTotal}
               valueLabel={currentVar.label}
             />
           </div>

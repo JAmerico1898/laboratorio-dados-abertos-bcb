@@ -83,8 +83,13 @@ export async function GET(
     }
   }
 
-  // Apply materiality filter and segment filter
+  // Apply materiality filter
   data = await applyMaterialityFilter(data, quarter, institutions);
+
+  // Compute system-wide total (all segments) before filtering
+  const { total: systemTotal } = computeSummary(data);
+
+  // Now filter by selected segments
   data = filterBySegments(data, segments);
 
   // Sort by absolute value descending
@@ -96,6 +101,7 @@ export async function GET(
     {
       institutions: data,
       total,
+      systemTotal,
       count,
       top5Share,
       quarter,
