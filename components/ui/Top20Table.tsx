@@ -17,7 +17,6 @@ const MEDALS = ["🏆", "🥈", "🥉"];
 
 export default function Top20Table({
   data,
-  total,
   systemTotal,
   valueLabel = "Valor",
 }: Top20TableProps) {
