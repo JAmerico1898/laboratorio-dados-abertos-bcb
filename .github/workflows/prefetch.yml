@@ -1,0 +1,58 @@
+name: Prefetch BCB Data
+
+on:
+  schedule:
+    # Day 1 of each month at 06:00 UTC (03:00 BRT)
+    - cron: '0 6 1 * *'
+    # Retry on day 3 in case the BCB endpoint was unavailable
+    - cron: '0 6 3 * *'
+    # Retry on day 10 (BCB sometimes publishes Q data with extra delay)
+    - cron: '0 6 10 * *'
+
+  workflow_dispatch:
+
+jobs:
+  prefetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run prefetch script
+        run: python scripts/prefetch_data.py
+
+      - name: Show generated artifacts
+        run: |
+          echo "=== latest_quarter.txt ==="
+          cat data/latest_quarter.txt 2>/dev/null || echo "(missing)"
+          echo "=== manifest.json ==="
+          cat data/manifest.json 2>/dev/null || echo "(missing)"
+          echo "=== parquet files ==="
+          ls -lh data/*.parquet 2>/dev/null | head -40 || echo "(none)"
+
+      - name: Commit and push updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "No data changes to commit."
+          else
+            git commit -m "chore: update BCB data $(date +%Y-%m-%d)"
+            git push
+          fi

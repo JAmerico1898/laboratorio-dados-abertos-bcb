@@ -1,14 +1,15 @@
 {
-  "latest_quarter": 202509,
+  "latest_quarter": 202512,
   "quarters": [
+    202512,
     202509,
     202506,
-    202503,
-    202412
+    202503
   ],
-  "generated_at": "2026-03-03T19:15:03.669112",
+  "generated_at": "2026-05-06T14:19:42.990590",
   "files": [
     "cadastro_202509.parquet",
+    "cadastro_202512.parquet",
     "taxas_d_adiantamento_sobre_contratos_de_cambio_acc_pos_fixado_referenciado_em_moeda_estr.parquet",
     "taxas_d_antecipacao_de_faturas_de_cartao_de_credito_prefixado.parquet",
     "taxas_d_aquisicao_de_outros_bens_prefixado.parquet",
@@ -48,6 +49,13 @@
     "valores_202509_t1_r2.parquet",
     "valores_202509_t1_r3.parquet",
     "valores_202509_t1_r4.parquet",
-    "valores_202509_t1_r9.parquet"
+    "valores_202509_t1_r9.parquet",
+    "valores_202512_t1_r1.parquet",
+    "valores_202512_t1_r11.parquet",
+    "valores_202512_t1_r13.parquet",
+    "valores_202512_t1_r2.parquet",
+    "valores_202512_t1_r3.parquet",
+    "valores_202512_t1_r4.parquet",
+    "valores_202512_t1_r9.parquet"
   ]
 }
