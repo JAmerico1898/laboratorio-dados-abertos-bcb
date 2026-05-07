@@ -223,7 +223,7 @@ export const MODULO2_VARS: VarDef[] = [
   },
   {
     key: "despesas_captacao",
-    nomeColuna: "Despesas de Captação \n(b1)",
+    nomeColuna: "Despesas de Captações \n(g)",
     label: "Despesas de Captação",
     icon: "💸",
     description: "Custo de captação de recursos",
@@ -241,7 +241,7 @@ export const MODULO2_VARS: VarDef[] = [
   },
   {
     key: "rendas_servicos",
-    nomeColuna: "Rendas de Prestação de Serviços \n(d1)",
+    nomeColuna: "Outras Rendas de Prestação de Serviços \n(n)",
     label: "Rendas de Serviços",
     icon: "🎯",
     description: "Rendas de prestação de serviços",

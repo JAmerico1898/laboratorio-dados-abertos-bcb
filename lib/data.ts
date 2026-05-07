@@ -226,23 +226,28 @@ export async function extractVariable(
   const validCodes = new Set(institutions.map((i) => i.CodInst));
   const instMap = new Map(institutions.map((i) => [i.CodInst, i]));
 
+  // DRE column names carry a parenthetical code suffix after `\n` (e.g. "Lucro Líquido \n(z) = (w) + (x) + (y)")
+  // that BCB revises across periods. Match only on the human-readable prefix to stay resilient.
+  const prefix = (s: string) => s.split("\n")[0].trim();
+
   let balances: Map<number, number>;
 
   if (Array.isArray(nomeColuna)) {
-    // Sum multiple columns (for compound variables)
+    const targets = new Set(nomeColuna.map(prefix));
     balances = new Map();
     for (const row of rows) {
       if (!validCodes.has(row.CodInst)) continue;
-      if (!nomeColuna.includes(row.NomeColuna)) continue;
+      if (!targets.has(prefix(row.NomeColuna))) continue;
       const val = Number(row.Saldo);
       if (isNaN(val)) continue;
       balances.set(row.CodInst, (balances.get(row.CodInst) ?? 0) + val);
     }
   } else {
+    const target = prefix(nomeColuna);
     balances = new Map();
     for (const row of rows) {
       if (!validCodes.has(row.CodInst)) continue;
-      if (row.NomeColuna !== nomeColuna) continue;
+      if (prefix(row.NomeColuna) !== target) continue;
       const val = Number(row.Saldo);
       if (!isNaN(val)) {
         balances.set(row.CodInst, val);

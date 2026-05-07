@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
 
     case "despesa_captacao_pct": {
       const despCaptacao = toMap(
-        await getVarAnnualized("Despesas de Captação \n(b1)", RELATORIO_RESULTADO)
+        await getVarAnnualized("Despesas de Captações \n(g)", RELATORIO_RESULTADO)
       );
       const captacoes = toMap(await getVar("Captações", RELATORIO_RESUMO));
       result = computeRatio(despCaptacao, captacoes, institutions, segments, 100);
@@ -187,7 +187,7 @@ export async function GET(request: NextRequest) {
       );
       const rendServicos = toMap(
         await getVarAnnualized(
-          "Rendas de Prestação de Serviços \n(d1)",
+          "Outras Rendas de Prestação de Serviços \n(n)",
           RELATORIO_RESULTADO
         )
       );
