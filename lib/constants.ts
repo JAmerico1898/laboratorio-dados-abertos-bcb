@@ -106,6 +106,16 @@ export const SEGMENT_COLORS: Record<Segment, string> = {
   S4: "#7c3aed",
 };
 
+export const SEGMENT_DEFINITIONS: Record<Segment, string> = {
+  N1: "Não bancário de Crédito.",
+  N2: "Não bancário do Mercado de Capitais.",
+  N4: "Instituições de Pagamento.",
+  S1: "Bancos múltiplos, bancos comerciais, bancos de investimento, bancos de câmbio e caixas econômicas que (i) tenham porte (Exposição/Produto Interno Bruto) superior a 10%; ou (ii) exerçam atividade internacional relevante (ativos no exterior superiores a US$ 10 bilhões).",
+  S2: "(i) Bancos múltiplos, bancos comerciais, bancos de investimento, bancos de câmbio e caixas econômicas de porte inferior a 10% e igual ou superior a 1%; e (ii) demais instituições autorizadas a funcionar pelo Banco Central do Brasil de porte igual ou superior a 1% do PIB.",
+  S3: "Instituições de porte inferior a 1% e igual ou superior a 0,1%.",
+  S4: "Instituições de porte inferior a 0,1%.",
+};
+
 // ─────────────────────────────────────────────
 // MATERIALITY THRESHOLDS
 // ─────────────────────────────────────────────
