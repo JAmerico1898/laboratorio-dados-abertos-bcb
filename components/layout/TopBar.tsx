@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { APP_TITLE } from "@/lib/constants";
 import NavLinks from "./NavLinks";
 
@@ -8,9 +9,14 @@ export default function TopBar() {
       <div className="mx-auto max-w-container px-4 py-3">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 no-underline">
-            <span className="rounded-[12px] bg-accent-cyan-dim p-2 text-3xl">
-              🏦
-            </span>
+            <Image
+              src="/logo/finlab-logo-white.jpg"
+              alt="FinLab"
+              width={48}
+              height={48}
+              priority
+              className="rounded-[12px]"
+            />
             <div>
               <span className="font-display text-xl font-bold text-text-primary">
                 {APP_TITLE}
