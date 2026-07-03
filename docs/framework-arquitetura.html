@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratório de Dados Públicos — Documento de Arquitetura e Framework</title>
+<style>
+  :root{
+    --bg-primary:#0a0f1a; --bg-card:#111827; --bg-card-hover:#1a2332; --bg-surface:#0d1321;
+    --border-color:rgba(34,211,238,0.12); --border-hover:rgba(34,211,238,0.3);
+    --text-primary:#f1f5f9; --text-secondary:#94a3b8; --text-muted:#64748b;
+    --accent-cyan:#22d3ee; --accent-cyan-dim:rgba(34,211,238,0.15);
+    --accent-emerald:#34d399; --accent-rose:#fb7185; --accent-amber:#fbbf24; --accent-violet:#a78bfa;
+    --mono:"SF Mono",ui-monospace,"Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:"Space Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --sidebar-w:290px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg-primary);color:var(--text-primary);
+    font-family:var(--sans);line-height:1.65;font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent-cyan);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font-family:var(--mono);font-size:.86em;background:var(--accent-cyan-dim);
+    color:#a5f3fc;padding:.12em .42em;border-radius:5px;white-space:nowrap}
+  pre{
+    background:var(--bg-surface);border:1px solid var(--border-color);border-radius:12px;
+    padding:18px 20px;overflow-x:auto;font-family:var(--mono);font-size:13.2px;line-height:1.55;
+    color:#cbd5e1;margin:18px 0;
+  }
+  pre code{background:none;color:inherit;padding:0;white-space:pre;font-size:inherit}
+  pre .c{color:#64748b;font-style:italic}      /* comment */
+  pre .k{color:#c084fc}                          /* keyword */
+  pre .s{color:#86efac}                          /* string  */
+  pre .f{color:#7dd3fc}                          /* func    */
+  pre .n{color:#fbbf24}                          /* number/const */
+
+  /* ---------- Layout ---------- */
+  .shell{display:flex;max-width:1500px;margin:0 auto}
+  nav.toc{
+    width:var(--sidebar-w);flex:0 0 var(--sidebar-w);position:sticky;top:0;height:100vh;
+    overflow-y:auto;padding:34px 18px 60px 26px;border-right:1px solid var(--border-color);
+    background:linear-gradient(180deg,var(--bg-surface),var(--bg-primary));
+  }
+  nav.toc .brand{font-weight:700;font-size:.82rem;letter-spacing:.06em;color:var(--accent-cyan);
+    text-transform:uppercase;margin-bottom:4px}
+  nav.toc .brandsub{font-size:.72rem;color:var(--text-muted);margin-bottom:22px;letter-spacing:.02em}
+  nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:sec}
+  nav.toc li{margin:1px 0}
+  nav.toc a{display:block;color:var(--text-secondary);font-size:.83rem;padding:5px 10px;border-radius:7px;
+    border-left:2px solid transparent;transition:.15s}
+  nav.toc a:hover{background:var(--bg-card-hover);color:var(--text-primary);text-decoration:none}
+  nav.toc a.sub{padding-left:22px;font-size:.78rem;color:var(--text-muted)}
+  main{flex:1 1 auto;min-width:0;padding:46px 56px 120px;max-width:960px}
+
+  /* ---------- Typography ---------- */
+  h1{font-size:2.35rem;line-height:1.15;margin:0 0 8px;letter-spacing:-.02em;font-weight:700}
+  h2{font-size:1.62rem;margin:64px 0 6px;padding-top:18px;letter-spacing:-.015em;font-weight:700;
+    border-top:1px solid var(--border-color)}
+  h2 .num{color:var(--accent-cyan);font-family:var(--mono);font-size:1.05rem;margin-right:10px;font-weight:500}
+  h3{font-size:1.16rem;margin:36px 0 4px;font-weight:700;color:#e2e8f0}
+  h4{font-size:.98rem;margin:24px 0 2px;font-weight:700;color:var(--accent-cyan);letter-spacing:.01em}
+  p{margin:12px 0;color:var(--text-secondary)}
+  strong{color:var(--text-primary);font-weight:600}
+  ul,ol.body{margin:12px 0;padding-left:22px}
+  ul li,ol.body li{margin:7px 0;color:var(--text-secondary)}
+  .lead{font-size:1.12rem;color:var(--text-secondary);max-width:70ch}
+
+  /* ---------- Components ---------- */
+  .pill{display:inline-block;font-family:var(--mono);font-size:.66rem;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;padding:4px 10px;border-radius:99px;border:1px solid var(--border-hover);
+    color:var(--accent-cyan);background:var(--accent-cyan-dim);vertical-align:middle}
+  .tag{display:inline-block;font-family:var(--mono);font-size:.68rem;font-weight:700;padding:2px 8px;
+    border-radius:6px;margin-right:5px}
+  .tag.core{background:rgba(52,211,153,.15);color:var(--accent-emerald);border:1px solid rgba(52,211,153,.35)}
+  .tag.domain{background:rgba(251,146,60,.14);color:#fb923c;border:1px solid rgba(251,146,60,.35)}
+
+  .grid{display:grid;gap:16px;margin:20px 0}
+  .grid.g2{grid-template-columns:1fr 1fr}
+  .grid.g3{grid-template-columns:1fr 1fr 1fr}
+  .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:18px 20px}
+  .card h4{margin-top:0}
+  .card .ic{font-size:1.5rem;display:block;margin-bottom:6px}
+  .card p{margin:6px 0 0;font-size:.86rem;color:var(--text-muted)}
+
+  table{width:100%;border-collapse:collapse;margin:20px 0;font-size:.86rem}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border-color);vertical-align:top}
+  th{color:var(--accent-cyan);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700;
+    background:var(--bg-surface)}
+  td{color:var(--text-secondary)}
+  td code{white-space:normal}
+  tr:hover td{background:rgba(34,211,238,.03)}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--border-color);border-radius:12px;margin:20px 0}
+  .tbl-wrap table{margin:0}
+
+  .note{border-left:3px solid var(--accent-cyan);background:rgba(34,211,238,.06);
+    padding:14px 18px;border-radius:0 10px 10px 0;margin:20px 0}
+  .note.warn{border-left-color:var(--accent-amber);background:rgba(251,191,36,.07)}
+  .note.core{border-left-color:var(--accent-emerald);background:rgba(52,211,153,.07)}
+  .note p{margin:6px 0;color:var(--text-secondary)}
+  .note .lbl{font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--accent-cyan);display:block;margin-bottom:4px}
+  .note.warn .lbl{color:var(--accent-amber)}
+  .note.core .lbl{color:var(--accent-emerald)}
+
+  .flow{background:var(--bg-surface);border:1px solid var(--border-color);border-radius:14px;
+    padding:26px 22px;margin:22px 0;overflow-x:auto}
+  .flow pre{background:none;border:none;padding:0;margin:0;color:#94a3b8;font-size:12.5px;line-height:1.5}
+
+  .kv{display:grid;grid-template-columns:180px 1fr;gap:2px 18px;margin:14px 0;font-size:.88rem}
+  .kv dt{color:var(--accent-cyan);font-family:var(--mono);font-size:.8rem;padding:5px 0}
+  .kv dd{margin:0;color:var(--text-secondary);padding:5px 0;border-bottom:1px solid var(--border-color)}
+
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:16px 0;font-size:.8rem;color:var(--text-muted)}
+  .legend span{display:flex;align-items:center;gap:7px}
+
+  header.hero{margin-bottom:20px}
+  header.hero .meta{font-family:var(--mono);font-size:.74rem;color:var(--text-muted);letter-spacing:.04em;
+    margin-top:14px}
+  hr.soft{border:none;border-top:1px solid var(--border-color);margin:30px 0}
+  .footdoc{margin-top:80px;padding-top:24px;border-top:1px solid var(--border-color);
+    font-family:var(--mono);font-size:.74rem;color:var(--text-muted)}
+
+  @media(max-width:1080px){
+    nav.toc{display:none}
+    main{padding:32px 22px 90px}
+    .grid.g2,.grid.g3{grid-template-columns:1fr}
+    .kv{grid-template-columns:1fr}
+    .kv dt{padding-bottom:0}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ══════════════ SIDEBAR TOC ══════════════ -->
+<nav class="toc">
+  <div class="brand">Laboratório de Dados Públicos</div>
+  <div class="brandsub">Documento de Arquitetura &amp; Framework de Replicação</div>
+  <ol>
+    <li><a href="#visao">1 · Visão geral</a></li>
+    <li><a href="#filosofia">2 · Filosofia arquitetural</a></li>
+    <li><a href="#stack">3 · Stack tecnológica</a></li>
+    <li><a href="#arquitetura">4 · Arquitetura de alto nível</a></li>
+    <li><a href="#ingestao">5 · Camada de ingestão</a></li>
+    <li><a href="#dados">6 · Camada de dados</a></li>
+    <li><a href="#dominio" class="sub">6.1 · Modelo de domínio</a></li>
+    <li><a href="#cache" class="sub">6.2 · Cache &amp; extração</a></li>
+    <li><a href="#api">7 · Camada de API</a></li>
+    <li><a href="#cliente">8 · Camada de cliente</a></li>
+    <li><a href="#modulos">9 · Sistema de módulos</a></li>
+    <li><a href="#treemap" class="sub">9.1 · Padrão Treemap</a></li>
+    <li><a href="#rankings" class="sub">9.2 · Rankings / séries</a></li>
+    <li><a href="#indices" class="sub">9.3 · Índices derivados</a></li>
+    <li><a href="#cartograma" class="sub">9.4 · Cartograma</a></li>
+    <li><a href="#componentes">10 · Biblioteca visual</a></li>
+    <li><a href="#design">11 · Design system</a></li>
+    <li><a href="#deploy">12 · Deploy &amp; CI/CD</a></li>
+    <li><a href="#generalizar">13 · Generalizar p/ outro setor</a></li>
+    <li><a href="#checklist">14 · Checklist de replicação</a></li>
+    <li><a href="#glossario">15 · Glossário</a></li>
+  </ol>
+</nav>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<main>
+
+<header class="hero">
+  <span class="pill">● API Dados Abertos</span>
+  <h1>Laboratório de Dados Públicos</h1>
+  <p class="lead">Documento técnico do processo de criação e funcionamento da aplicação — uma
+  plataforma web que transforma dados públicos setoriais brutos em visualizações interativas,
+  atualizada de forma autônoma e servida sem banco de dados. Escrito também para servir de
+  <strong>framework de replicação</strong>: o núcleo genérico está deliberadamente separado da
+  camada de domínio, de modo que outra fonte de dados pública possa reaproveitar toda a espinha dorsal.</p>
+  <div class="meta">Fonte: código-fonte da aplicação (Next.js 14 · TypeScript · Vercel) · Documento vivo</div>
+</header>
+
+<div class="legend">
+  <span><span class="tag core">NÚCLEO</span> reutilizável entre domínios</span>
+  <span><span class="tag domain">DOMÍNIO</span> específico da fonte de dados atual</span>
+</div>
+
+<!-- ─────────── 1 ─────────── -->
+<h2 id="visao"><span class="num">01</span>Visão geral</h2>
+<p>O <strong>Laboratório de Dados Públicos</strong> é uma aplicação web que consome as APIs abertas de
+um órgão regulador, congela os dados relevantes em arquivos colunares e os apresenta em módulos
+temáticos de análise: composição patrimonial, resultado (DRE), carteiras de crédito, taxas de juros,
+índices financeiros derivados e distribuição regional. O usuário final navega por um <em>hub</em> de
+cartões, entra em cada módulo, escolhe variáveis e filtros, e recebe gráficos e tabelas de ranking
+gerados sob medida.</p>
+
+<p>Três decisões definem o produto e explicam quase toda a arquitetura:</p>
+<div class="grid g3">
+  <div class="card"><span class="ic">🧊</span><h4>Dados congelados</h4>
+    <p>A aplicação nunca chama a API do órgão em tempo de requisição. Um robô mensal baixa tudo e
+    grava arquivos <code>.parquet</code> versionados no próprio repositório.</p></div>
+  <div class="card"><span class="ic">🗄️</span><h4>Sem banco de dados</h4>
+    <p>Não há Postgres, nem ORM, nem migrations. A "base" é o diretório <code>/data</code>. Isso zera
+    custo operacional e torna cada deploy uma fotografia imutável e reproduzível.</p></div>
+  <div class="card"><span class="ic">🧩</span><h4>Módulos como padrão</h4>
+    <p>Cada módulo é uma instância de um punhado de padrões (treemap, ranking, índice, mapa). Adicionar
+    análise = declarar dados em constantes, não escrever nova infraestrutura.</p></div>
+</div>
+
+<p>O resultado é uma aplicação de custo marginal próximo de zero, que se auto-atualiza quando o órgão
+publica novos números, e que qualquer pessoa consegue clonar, rodar e auditar por completo, porque
+todo o "estado do mundo" está commitado no Git.</p>
+
+<!-- ─────────── 2 ─────────── -->
+<h2 id="filosofia"><span class="num">02</span>Filosofia arquitetural</h2>
+<p>A aplicação nasceu de uma migração: existia uma versão anterior em Python/Streamlit e foi
+reescrita em Next.js. Essa herança deixou marcas úteis — a lógica de negócio (classificação,
+extração, anualização, filtros de materialidade) foi <em>portada função a função</em> do Python para
+o TypeScript, o que produziu uma camada de dados pura e testável, desacoplada da UI.</p>
+
+<p>Os princípios que sustentam o sistema:</p>
+<ul>
+  <li><strong>Pré-computação sobre computação em tempo real.</strong> Todo trabalho caro e lento
+  (chamar a API do órgão, paginar, tratar timeouts) acontece <em>offline</em>, uma vez por mês, num
+  robô. A aplicação só lê arquivos locais.</li>
+  <li><strong>Estado do mundo no repositório.</strong> Os dados são artefatos versionados. Um deploy é
+  determinístico: o mesmo commit sempre produz a mesma aplicação com os mesmos números.</li>
+  <li><strong>Domínio isolado em constantes.</strong> Praticamente toda a especificidade da fonte de
+  dados (quais relatórios, quais colunas, quais fórmulas, quais rótulos) vive em
+  <code>lib/constants.ts</code>. O código de infraestrutura não conhece o domínio.</li>
+  <li><strong>Servidor fino, cálculo próximo do dado.</strong> As <em>route handlers</em> leem parquet,
+  aplicam a regra de negócio e devolvem JSON já pronto para plotar. O cliente não faz cálculo pesado.</li>
+  <li><strong>Estado da UI na URL.</strong> Variável selecionada e segmentos ficam nos
+  <em>query params</em>, tornando cada visão compartilhável e navegável pelo botão "voltar".</li>
+</ul>
+
+<div class="note core">
+  <span class="lbl">Por que isto importa para replicação</span>
+  <p>A separação <span class="tag core">NÚCLEO</span> / <span class="tag domain">DOMÍNIO</span> é
+  intencional e explícita no código. Trocar a fonte de dados significa reescrever a camada de domínio
+  (o robô de ingestão e o arquivo de constantes) mantendo o núcleo intacto: leitor de parquet, cache,
+  contratos de API, hooks de dados, componentes de visualização e o design system.</p>
+</div>
+
+<!-- ─────────── 3 ─────────── -->
+<h2 id="stack"><span class="num">03</span>Stack tecnológica</h2>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Camada</th><th>Tecnologia</th><th>Papel</th></tr></thead>
+  <tbody>
+    <tr><td>Framework</td><td><code>Next.js 14</code> (App Router)</td><td>Páginas server/client, route handlers como backend serverless.</td></tr>
+    <tr><td>Linguagem</td><td><code>TypeScript</code> (strict)</td><td>Tipagem ponta a ponta; interfaces em <code>lib/types.ts</code>.</td></tr>
+    <tr><td>Leitura de dados</td><td><code>hyparquet</code></td><td>Leitor de Parquet 100% JS, sem binários nativos — roda em função serverless.</td></tr>
+    <tr><td>Cache</td><td><code>lru-cache</code></td><td>Cache em memória de módulo, sobrevive a invocações "quentes".</td></tr>
+    <tr><td>Fetch no cliente</td><td><code>swr</code></td><td>Cache, deduplicação e revalidação das chamadas às route handlers.</td></tr>
+    <tr><td>Gráficos</td><td><code>plotly.js</code> + <code>react-plotly.js</code></td><td>Treemaps, barras horizontais, séries temporais.</td></tr>
+    <tr><td>Estilo</td><td><code>Tailwind CSS</code> + CSS variables</td><td>Tema escuro ciano; tokens de design centralizados.</td></tr>
+    <tr><td>Fontes</td><td>Space Grotesk + Space Mono</td><td>Display e monoespaçada, via <code>next/font</code>.</td></tr>
+    <tr><td>Ingestão</td><td><code>Python</code> + <code>python-bcb</code> + <code>pandas</code></td><td>Robô que baixa e grava os Parquet.</td></tr>
+    <tr><td>Automação</td><td>GitHub Actions (cron)</td><td>Executa o robô mensalmente e faz commit dos dados.</td></tr>
+    <tr><td>Hospedagem</td><td>Vercel</td><td>Build estático + funções serverless; auto-deploy no push.</td></tr>
+  </tbody>
+</table>
+</div>
+<p><span class="tag domain">DOMÍNIO</span> Apenas a linha de <strong>ingestão</strong> (Python +
+biblioteca cliente do órgão) é específica da fonte. Todo o resto é <span class="tag core">NÚCLEO</span>
+e independe de qual dado público está sendo servido.</p>
+
+<!-- ─────────── 4 ─────────── -->
+<h2 id="arquitetura"><span class="num">04</span>Arquitetura de alto nível</h2>
+<p>O sistema tem dois ciclos de vida completamente separados: o <strong>pipeline de dados</strong>
+(mensal, offline, escreve arquivos) e o <strong>pipeline de request</strong> (por acesso, online, lê
+arquivos). Eles só se comunicam pelo diretório <code>/data</code> versionado.</p>
+
+<div class="flow">
+<pre>
+   CICLO DE DADOS  (mensal, GitHub Actions)          CICLO DE REQUEST  (por acesso, Vercel)
+   ───────────────────────────────────────           ─────────────────────────────────────
+
+   ┌─────────────────────┐                            ┌──────────────────┐
+   │  API aberta do órgão │                            │     Navegador     │
+   └──────────┬──────────┘                            │  (client compos.) │
+              │ python-bcb                             └────────┬─────────┘
+              ▼                                                 │ SWR fetch
+   ┌─────────────────────┐                                     ▼  /api/...
+   │ scripts/prefetch.py  │                            ┌──────────────────┐
+   │  • acha trimestre    │                            │  Route Handler    │
+   │  • baixa relatórios  │                            │  (serverless)     │
+   │  • baixa taxas       │                            │  • lê parquet     │
+   └──────────┬──────────┘                            │  • regra negócio  │
+              │ df.to_parquet()                        │  • devolve JSON   │
+              ▼                                         └────────┬─────────┘
+   ┌─────────────────────┐        git commit + push            │ readParquet()
+   │   /data/*.parquet    │◀───────────────────────────────────┤ (LRU cache)
+   │   manifest.json      │        AUTO-DEPLOY VERCEL           ▼
+   │   latest_quarter.txt │───────────────────────────▶ ┌──────────────────┐
+   └─────────────────────┘                              │  /data (no bundle)│
+                                                         └──────────────────┘
+</pre>
+</div>
+
+<p>Repare que o diretório <code>/data</code> aparece nos dois ciclos: o robô o <em>escreve</em> e o
+comita; o deploy o embarca; a função serverless o <em>lê</em>. Não há rede entre a aplicação e o órgão
+em tempo de request — a latência e a fragilidade da API externa foram empurradas para o robô mensal.</p>
+
+<h4>Estrutura de pastas</h4>
+<pre><code><span class="c">/app</span>
+  layout.tsx            <span class="c">// tema, fontes, metadata (lang=pt-BR)</span>
+  page.tsx              <span class="c">// hub — grade de cartões de módulo</span>
+  /modulos
+    /&lt;modulo&gt;/page.tsx  <span class="c">// server component (metadata)</span>
+    /&lt;modulo&gt;/client.tsx<span class="c">// client component (estado + gráficos)</span>
+    layout.tsx          <span class="c">// TopBar + main + Footer</span>
+  /api
+    /quarter/route.ts           <span class="c">// trimestre corrente + rótulos</span>
+    /ifdata/[report]/route.ts   <span class="c">// endpoint genérico de relatório</span>
+    /indices/route.ts           <span class="c">// índices derivados</span>
+    /taxas/[slug]/route.ts      <span class="c">// séries de taxas</span>
+    /feedback , /health
+<span class="c">/components</span>  charts/ · hub/ · layout/ · shared/ · ui/
+<span class="c">/lib</span>         constants.ts · data.ts · formatting.ts · slugify.ts · types.ts
+<span class="c">/hooks</span>       useModuleData.ts · useDebounce.ts
+<span class="c">/scripts</span>     prefetch_data.py · precompute_taxas.mjs
+<span class="c">/data</span>        *.parquet · manifest.json · latest_quarter.txt
+<span class="c">/.github/workflows</span>  prefetch.yml
+</code></pre>
+
+<!-- ─────────── 5 ─────────── -->
+<h2 id="ingestao"><span class="num">05</span>Camada de ingestão <span class="tag domain">DOMÍNIO</span></h2>
+<p>O robô <code>scripts/prefetch_data.py</code> é o único ponto que fala com a fonte de dados. É um
+script Python idempotente, executado pelo GitHub Actions, que produz o conteúdo de <code>/data</code>.
+Seu fluxo (função <code>main()</code>):</p>
+
+<ol class="body">
+  <li><strong>Descobrir o período mais recente.</strong> <code>find_latest_quarter_raw()</code> testa,
+  do trimestre atual para trás, qual já foi publicado — porque o órgão publica com 2–3 meses de atraso
+  e de forma irregular. Grava o resultado em <code>latest_quarter.txt</code>.</li>
+  <li><strong>Baixar o cadastro</strong> das instituições daquele período.</li>
+  <li><strong>Baixar cada relatório</strong> do período mais recente (Resumo, Ativo, Passivo, DRE,
+  Crédito por região, Crédito PF, Crédito PJ) e salvar como <code>valores_&lt;periodo&gt;_t1_r&lt;n&gt;.parquet</code>.</li>
+  <li><strong>Baixar trimestres anteriores</strong> apenas dos relatórios que precisam de
+  <em>anualização</em> (Resumo e DRE), somando 4 trimestres — ver §9.3.</li>
+  <li><strong>Baixar as séries de taxas de juros</strong>, uma modalidade por arquivo
+  (<code>taxas_d_&lt;slug&gt;.parquet</code> diárias, <code>taxas_m_&lt;slug&gt;.parquet</code> mensais).</li>
+  <li><strong>Escrever o <code>manifest.json</code></strong> com período, lista de trimestres, timestamp
+  e inventário de arquivos.</li>
+</ol>
+
+<h4>Robustez de ingestão</h4>
+<p>Como a API do órgão é lenta e intermitente, o robô embute defesas que valem para qualquer fonte
+pública: <code>max_retries</code> com <em>back-off</em> progressivo (<code>time.sleep(5*(n+1))</code>),
+<code>time.sleep()</code> entre chamadas para não sobrecarregar o endpoint, e tolerância a arquivos
+vazios (loga aviso e segue). Os erros do robô nunca chegam ao usuário: se um arquivo falha, a
+aplicação simplesmente serve o dado anterior já commitado.</p>
+
+<div class="note warn">
+  <span class="lbl">Ponto de acoplamento ao domínio</span>
+  <p>Três coisas neste script são específicas da fonte: (1) a <strong>biblioteca cliente</strong> do
+  órgão; (2) a <strong>lista de relatórios/modalidades</strong> a baixar; (3) o <strong>formato de
+  período</strong> (aqui, trimestres <code>AAAAMM</code>). Para outro setor, é este arquivo — e só ele
+  no back-end — que precisa ser reescrito.</p>
+</div>
+
+<h4>Contrato de saída (a "interface" entre os dois ciclos)</h4>
+<div class="kv">
+  <dt>latest_quarter.txt</dt><dd>Inteiro do período corrente, ex.: <code>202512</code>.</dd>
+  <dt>manifest.json</dt><dd><code>{ latest_quarter, quarters[], generated_at, files[] }</code>.</dd>
+  <dt>valores_&lt;p&gt;_t&lt;t&gt;_r&lt;n&gt;.parquet</dt><dd>Linhas longas: <code>CodInst · NomeColuna · Grupo? · Saldo</code>.</dd>
+  <dt>cadastro_&lt;p&gt;.parquet</dt><dd>Cadastro das entidades: código, nome, atributos de classificação.</dd>
+  <dt>taxas_[d|m]_&lt;slug&gt;.parquet</dt><dd>Séries por modalidade (data · entidade · taxa · posição).</dd>
+</div>
+
+<!-- ─────────── 6 ─────────── -->
+<h2 id="dados"><span class="num">06</span>Camada de dados <span class="tag core">NÚCLEO</span></h2>
+<p>Toda a leitura e o processamento vivem em <code>lib/data.ts</code>. É código de servidor puro
+(usa <code>fs</code>), sem nenhuma dependência de React. Ele lê os Parquet, aplica as regras de negócio
+e devolve objetos tipados.</p>
+
+<h3 id="dominio">6.1 · Modelo de domínio</h3>
+<p>O formato dos dados é o clássico "tabela longa" (<em>long/tidy</em>): cada arquivo de valores tem
+uma linha por (instituição × conta), não uma coluna por métrica. Isso é o que permite ao <em>mesmo</em>
+código de extração servir dezenas de variáveis diferentes — a métrica é um <strong>valor de filtro</strong>
+(<code>NomeColuna</code>), não uma coluna de esquema. As interfaces centrais (<code>lib/types.ts</code>):</p>
+
+<pre><code><span class="k">interface</span> <span class="f">CadastroRow</span>  { CodInst; NomeInstituicao; Tcb; Sr; ... }
+<span class="k">interface</span> <span class="f">InstitutionBase</span> { CodInst; NomeInstituicao; NomeDisplay; NomeReduzido; Segmento }
+<span class="k">interface</span> <span class="f">InstitutionRow</span>  <span class="k">extends</span> InstitutionBase { Saldo: <span class="k">number</span> }
+</code></pre>
+
+<h4>Classificação de segmento <span class="tag domain">DOMÍNIO</span></h4>
+<p>A função <code>classifySegment()</code> encapsula uma regra regulatória: um campo (<code>Tcb</code>)
+tem prioridade e, se pertencer a um conjunto de sobreposição, vence; senão cai para outro campo
+(<code>Sr</code>); senão a entidade é descartada como "Outros". É o exemplo canônico de regra de
+domínio isolada numa função de 5 linhas — trocável sem tocar em mais nada.</p>
+<pre><code><span class="k">export function</span> <span class="f">classifySegment</span>(row) {
+  <span class="k">const</span> tcb = (row.Tcb ?? <span class="s">""</span>).toString().trim().toUpperCase();
+  <span class="k">if</span> (TCB_OVERRIDE.has(tcb)) <span class="k">return</span> tcb;      <span class="c">// N1,N2,N4 vencem</span>
+  <span class="k">const</span> sr = (row.Sr ?? <span class="s">""</span>).toString().trim().toUpperCase();
+  <span class="k">if</span> (VALID_SR.has(sr)) <span class="k">return</span> sr;          <span class="c">// senão S1..S4</span>
+  <span class="k">return</span> <span class="s">"Outros"</span>;                          <span class="c">// senão descarta</span>
+}</code></pre>
+
+<h4>Construção da tabela de entidades</h4>
+<p><code>buildInstitutionTable(anomes)</code> lê o cadastro, classifica os segmentos, mantém apenas a
+visão consolidada ("PRUDENCIAL", para não contar a mesma entidade duas vezes), deduplica por código,
+gera nomes de exibição/curtos e cacheia o resultado. É a "dimensão" que todas as consultas de fato
+cruzam com os "fatos".</p>
+
+<h3 id="cache">6.2 · Cache e extração</h3>
+<h4>Leitura + cache</h4>
+<p><code>readParquet()</code> é o coração do núcleo. Lê o arquivo com <code>hyparquet</code> (import
+dinâmico, pois é ESM-only), converte <code>BigInt</code>→<code>Number</code> e memoiza o array de linhas
+num <code>LRUCache</code> de módulo. Como as funções serverless da Vercel são reaproveitadas entre
+requisições ("warm"), esse cache elimina releituras de disco na maioria dos acessos.</p>
+<pre><code><span class="k">const</span> cache = <span class="k">new</span> <span class="f">LRUCache</span>({ max: <span class="n">50</span> });
+
+<span class="k">export async function</span> <span class="f">readParquet</span>(filename, columns?) {
+  <span class="k">const</span> key = <span class="s">`parquet:${filename}:${columns ?? "all"}`</span>;
+  <span class="k">if</span> (cache.has(key)) <span class="k">return</span> cache.get(key);
+  <span class="k">const</span> { parquetReadObjects } = <span class="k">await import</span>(<span class="s">"hyparquet"</span>);
+  <span class="k">const</span> rows = <span class="k">await</span> <span class="f">parquetReadObjects</span>({ file, columns });
+  cache.set(key, rows); <span class="k">return</span> rows;
+}</code></pre>
+
+<h4>As quatro funções de extração <span class="tag core">NÚCLEO</span></h4>
+<p>Toda análise da aplicação se reduz a uma destas quatro operações sobre a tabela longa:</p>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Função</th><th>O que faz</th><th>Usada por</th></tr></thead>
+  <tbody>
+    <tr><td><code>extractVariable()</code></td><td>Filtra por <code>NomeColuna</code>, cruza com entidades, devolve saldo por instituição.</td><td>Patrimônio, crédito por região, componentes de índice.</td></tr>
+    <tr><td><code>extractVariableAnnualized()</code></td><td>Chama <code>extractVariable</code> em 4 períodos e <strong>soma</strong> por entidade.</td><td>DRE (fluxos acumulados de 12 meses).</td></tr>
+    <tr><td><code>extractCreditVariable()</code></td><td>Filtra por <code>Grupo</code> + <code>NomeColuna="Total"</code> (ou por total explícito).</td><td>Carteiras de crédito PF/PJ.</td></tr>
+    <tr><td><code>applyMaterialityFilter()</code></td><td>Mantém só entidades acima de limiares de porte (ativo ≥ R$100M <em>e</em> PL ≥ R$20M).</td><td>Todos os módulos, antes de plotar.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <span class="lbl">Detalhe de resiliência aprendido em produção</span>
+  <p>Os nomes de conta da DRE trazem um sufixo de código entre parênteses após um <code>\n</code>
+  (ex.: <code>"Lucro Líquido \n(j) = (g) + (h) + (i)"</code>) que o órgão <em>revisa</em> de tempos em
+  tempos. Por isso a extração casa apenas o <strong>prefixo legível</strong>
+  (<code>s.split("\n")[0].trim()</code>), ignorando o sufixo volátil. É a diferença entre um módulo que
+  quebra silenciosamente a cada revisão do plano de contas e um que sobrevive a ela.</p>
+</div>
+
+<p>Fechando o núcleo de dados: <code>filterBySegments()</code>, <code>searchBanks()</code> e
+<code>computeSummary()</code> (total do sistema, contagem e concentração do Top 5) — todos operando
+sobre <code>InstitutionRow[]</code>, sem I/O.</p>
+
+<!-- ─────────── 7 ─────────── -->
+<h2 id="api"><span class="num">07</span>Camada de API <span class="tag core">NÚCLEO</span></h2>
+<p>As <em>route handlers</em> do App Router são o backend. Todas declaram
+<code>export const runtime = "nodejs"</code> (precisam de <code>fs</code>), orquestram as funções de
+<code>lib/data.ts</code> e devolvem JSON já no formato que o gráfico consome. Todas anexam
+<code>Cache-Control</code> com <em>stale-while-revalidate</em>, então a CDN da Vercel serve a maioria
+dos acessos sem nem acordar a função.</p>
+
+<h4>Endpoint genérico de relatório — <code>/api/ifdata/[report]</code></h4>
+<p>Um único handler serve cinco módulos, roteando pelo número do relatório e pelo tipo de extração.
+É a peça que melhor mostra a economia da arquitetura:</p>
+<pre><code><span class="k">const</span> quarter = <span class="f">getLatestQuarter</span>();
+<span class="k">const</span> institutions = <span class="k">await</span> <span class="f">buildInstitutionTable</span>(quarter);
+
+<span class="k">if</span> (report === RELATORIO_CREDITO_PF || report === RELATORIO_CREDITO_PJ)
+  data = <span class="k">await</span> <span class="f">extractCreditVariable</span>(quarter, <span class="n">1</span>, report, varDef.grupo, institutions);
+<span class="k">else if</span> (annualized)
+  data = <span class="k">await</span> <span class="f">extractVariableAnnualized</span>(<span class="f">getLastNQuarters</span>(quarter,<span class="n">4</span>), report, col, institutions);
+<span class="k">else</span>
+  data = <span class="k">await</span> <span class="f">extractVariable</span>(quarter, <span class="n">1</span>, report, col, institutions);
+
+data = <span class="k">await</span> <span class="f">applyMaterialityFilter</span>(data, quarter, institutions);
+<span class="k">const</span> { total: systemTotal } = <span class="f">computeSummary</span>(data);   <span class="c">// total do sistema</span>
+data = <span class="f">filterBySegments</span>(data, segments);                <span class="c">// só depois filtra</span>
+data.sort((a,b) =&gt; Math.abs(b.Saldo) - Math.abs(a.Saldo));
+<span class="k">return</span> NextResponse.<span class="f">json</span>({ institutions: data, total, systemTotal, count, top5Share, quarter });</code></pre>
+<p>Note a ordem: calcula-se o total do <em>sistema inteiro</em> antes de aplicar o filtro de segmentos,
+para que o percentual mostrado ao usuário tenha um denominador estável.</p>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Rota</th><th>Parâmetros</th><th>Retorno</th></tr></thead>
+  <tbody>
+    <tr><td><code>/api/quarter</code></td><td>—</td><td>Período corrente + rótulos formatados.</td></tr>
+    <tr><td><code>/api/ifdata/[report]</code></td><td><code>variable</code>, <code>segments</code>, <code>annualized</code></td><td><code>{ institutions[], total, systemTotal, count, top5Share }</code></td></tr>
+    <tr><td><code>/api/indices</code></td><td><code>index</code>, <code>segments</code></td><td><code>{ institutions[], median, mean, count }</code></td></tr>
+    <tr><td><code>/api/taxas/[slug]</code></td><td><code>type=daily|monthly</code></td><td>Série da modalidade.</td></tr>
+    <tr><td><code>/api/feedback</code></td><td>corpo do formulário</td><td>Encaminha via Pushover (segredo fica no servidor).</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ─────────── 8 ─────────── -->
+<h2 id="cliente"><span class="num">08</span>Camada de cliente <span class="tag core">NÚCLEO</span></h2>
+<p>Cada módulo é um <em>server component</em> fininho (<code>page.tsx</code>, só metadata) que renderiza
+um <em>client component</em> (<code>client.tsx</code>) com o estado e os gráficos. A ponte entre a UI e a
+API é um único hook, <code>useModuleData()</code>, que concentra três responsabilidades:</p>
+<ul>
+  <li><strong>Estado na URL.</strong> Variável (<code>?var=</code>) e segmentos (<code>?seg=</code>) são
+  lidos e escritos nos <em>query params</em> via <code>router.replace(..., {scroll:false})</code> — a
+  visão é compartilhável e o histórico do navegador funciona.</li>
+  <li><strong>Fetch com SWR.</strong> Monta a URL da API e usa <code>useSWR</code> com
+  <code>dedupingInterval</code> e <code>revalidateOnFocus:false</code>, evitando refetch redundante.</li>
+  <li><strong>Rótulo de período.</strong> Busca <code>/api/quarter</code> (deduplicado por 1h) para exibir
+  o trimestre corrente.</li>
+</ul>
+<pre><code><span class="k">const</span> variable = searchParams.get(<span class="s">"var"</span>) ?? defaultVariable;
+<span class="k">const</span> segments = searchParams.get(<span class="s">"seg"</span>)?.split(<span class="s">","</span>) ?? DEFAULT_SEGMENTS;
+<span class="k">const</span> url = <span class="s">`/api/ifdata/${report}?variable=${enc(variable)}&segments=${segments}${annualized?"&annualized=true":""}`</span>;
+<span class="k">const</span> { data, error, isLoading } = <span class="f">useSWR</span>(url, fetcher, { revalidateOnFocus: <span class="k">false</span> });</code></pre>
+<p>Cinco dos módulos (todos os de treemap) compartilham ainda o componente
+<code>components/shared/TreemapModule.tsx</code>, que recebe a definição de variáveis e o número do
+relatório e monta a página inteira. Um módulo de treemap novo tem, literalmente, dezenas de linhas.</p>
+
+<!-- ─────────── 9 ─────────── -->
+<h2 id="modulos"><span class="num">09</span>Sistema de módulos</h2>
+<p>Os módulos não são features avulsas: são <strong>quatro padrões de visualização</strong> parametrizados
+por dados declarados em constantes. Entender os quatro padrões é entender a aplicação inteira.</p>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Padrão</th><th>Módulos</th><th>Visual</th><th>Fonte declarativa</th></tr></thead>
+  <tbody>
+    <tr><td><a href="#treemap">Treemap</a></td><td>Ativos/Passivos, Resultado, Crédito PF, Crédito PJ, Crédito por Região</td><td>Treemap por segmento</td><td><code>MODULO{1,2,3,4,6}_VARS</code></td></tr>
+    <tr><td><a href="#rankings">Rankings/Séries</a></td><td>Taxas de Juros</td><td>Tabelas Top/Bottom, séries temporais</td><td><code>MODALITIES</code></td></tr>
+    <tr><td><a href="#indices">Índices derivados</a></td><td>Índices Financeiros</td><td>Barras horizontais</td><td><code>INDICES</code></td></tr>
+    <tr><td><a href="#cartograma">Cartograma</a></td><td>Cartograma</td><td>Círculos de Dorling em SVG</td><td><code>REGION_CENTROIDS</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3 id="treemap">9.1 · Padrão Treemap (5 módulos)</h3>
+<p>O padrão de maior alavancagem. Cada módulo é uma tupla <code>(relatório, dicionário de variáveis)</code>.
+A página oferece: seletor de variável → filtro de segmentos → métricas-resumo → treemap → tabela Top 20
+→ busca. Uma variável é declarada assim:</p>
+<pre><code>{ key: <span class="s">"ativo_total"</span>, nomeColuna: <span class="s">"Ativo Total"</span>, label: <span class="s">"Ativo Total"</span>,
+  icon: <span class="s">"🏦"</span>, description: <span class="s">"Total de ativos"</span>, relatorio: RELATORIO_RESUMO }</code></pre>
+<p>Um <code>VAR_KEY_MAP</code> gerado por um loop no fim de <code>constants.ts</code> mapeia a
+<code>key</code> curta (que vai na URL) para o <code>nomeColuna</code> real (que filtra o parquet). O
+handler genérico e o <code>TreemapModule</code> fazem o resto — nenhum código novo por variável.</p>
+
+<h3 id="rankings">9.2 · Rankings e séries temporais (Taxas de Juros)</h3>
+<p>O módulo mais rico em UI, com abas: <strong>Rankings</strong> (Top 10 maiores e menores taxas por
+modalidade), <strong>Banco Individual</strong> (todas as taxas de uma entidade + sua posição no ranking),
+<strong>Gráficos</strong> (mediana diária ao longo do tempo) e <strong>Download</strong>. Cada modalidade
+é um arquivo Parquet próprio (100–200 mil linhas), endereçado por um <code>slug</code>. Detalhe crítico:
+a função <code>slugify()</code> do TypeScript precisa produzir <em>exatamente</em> o mesmo slug que a do
+Python usada na ingestão — é o contrato de nomes de arquivo que liga os dois ciclos.</p>
+
+<h3 id="indices">9.3 · Índices financeiros derivados</h3>
+<p>O único módulo que <em>calcula</em> em vez de só filtrar. O handler <code>/api/indices</code> lê
+múltiplos relatórios, anualiza os fluxos (soma de 4 trimestres) e computa razões por entidade. Cada
+índice é declarado em <code>INDICES</code> com sua fórmula-chave, formato e direção
+(<code>higherIsBetter</code>). Um <code>switch</code> por índice monta numerador/denominador a partir das
+funções de extração — exemplo do ROA:</p>
+<pre><code><span class="k">case</span> <span class="s">"roa"</span>: {
+  <span class="k">const</span> lucro = <span class="f">toMap</span>(<span class="k">await</span> <span class="f">getVarAnnualized</span>(<span class="s">"Lucro Líquido \n(j) = (g)+(h)+(i)"</span>, RELATORIO_RESULTADO));
+  <span class="k">const</span> ativo = <span class="f">toMap</span>(<span class="k">await</span> <span class="f">getVar</span>(<span class="s">"Ativo Total"</span>, RELATORIO_RESUMO));
+  result = <span class="f">computeRatio</span>(lucro, ativo, institutions, segments, <span class="n">100</span>);
+}</code></pre>
+<p>Após o cálculo, um filtro estatístico remove <em>outliers</em> além de 3σ da média (números derivados
+explodem com denominadores minúsculos) e o resultado é ordenado pela direção do índice. O handler também
+devolve mediana e média para as métricas-resumo.</p>
+
+<h3 id="cartograma">9.4 · Cartograma (círculos de Dorling)</h3>
+<p>O único visual que <em>não</em> usa Plotly: é um componente React que desenha SVG puro. Soma o volume
+de crédito por região (sem filtro de segmento), posiciona um círculo em cada centróide
+(<code>REGION_CENTROIDS</code>) com área proporcional ao valor
+(<code>r = min + (max-min)·√(v/vmax)</code>) e anima o crescimento com CSS. É o exemplo de que o padrão
+"declare os dados, o núcleo desenha" também vale para visualizações totalmente customizadas.</p>
+
+<!-- ─────────── 10 ─────────── -->
+<h2 id="componentes"><span class="num">10</span>Biblioteca visual <span class="tag core">NÚCLEO</span></h2>
+<div class="grid g3">
+  <div class="card"><h4>charts/</h4><p><code>TreemapChart</code>, <code>HBarChart</code>,
+    <code>DorlingCartogram</code>, <code>PlotlyChart</code> (wrapper com <code>dynamic import</code> e
+    <code>ssr:false</code> para não inflar o bundle).</p></div>
+  <div class="card"><h4>ui/</h4><p><code>SegmentFilter</code>, <code>VariableSelector</code>,
+    <code>Top20Table</code>, <code>SummaryMetrics</code>, <code>SearchInput</code>,
+    <code>SegmentPill</code>, <code>Skeleton</code>.</p></div>
+  <div class="card"><h4>layout/ · hub/ · shared/</h4><p><code>TopBar</code>, <code>Footer</code>,
+    <code>ModuleHeader</code>, <code>NavLinks</code>, <code>ModuleCard</code> e o orquestrador
+    <code>TreemapModule</code>.</p></div>
+</div>
+<p>Os componentes são "burros" quanto ao domínio: recebem <code>InstitutionRow[]</code> + um mapa de
+cores e renderizam. Trocar o domínio não os toca — apenas os dados que fluem por eles mudam.</p>
+
+<!-- ─────────── 11 ─────────── -->
+<h2 id="design"><span class="num">11</span>Design system <span class="tag core">NÚCLEO</span></h2>
+<p>O tema é definido por CSS variables no <code>:root</code> (portadas do produto original) e reusadas
+pelo Tailwind. Fundo escuro azul-marinho, acento ciano, tipografia Space Grotesk/Space Mono. Padrões de
+interação recorrentes: cartões que elevam no hover com linha de gradiente ciano no topo; <em>pills</em>
+coloridos por segmento; tabelas com barra de progresso proporcional; badge "API" com ponto verde pulsante.</p>
+<div class="legend">
+  <span><span style="width:14px;height:14px;border-radius:4px;background:#22d3ee;display:inline-block"></span> accent-cyan #22d3ee</span>
+  <span><span style="width:14px;height:14px;border-radius:4px;background:#34d399;display:inline-block"></span> emerald #34d399</span>
+  <span><span style="width:14px;height:14px;border-radius:4px;background:#fbbf24;display:inline-block"></span> amber #fbbf24</span>
+  <span><span style="width:14px;height:14px;border-radius:4px;background:#a78bfa;display:inline-block"></span> violet #a78bfa</span>
+  <span><span style="width:14px;height:14px;border-radius:4px;background:#fb7185;display:inline-block"></span> rose #fb7185</span>
+</div>
+<p>As funções de <code>lib/formatting.ts</code> mantêm a UI consistente e localizada:
+<code>formatBRL</code> (→ "R$ 1,4 bi"), <code>formatPct</code>, <code>formatAnomes</code> (202512 →
+"Dez/2025"), <code>getShortName</code>. Toda a aplicação é em português do Brasil (<code>lang="pt-BR"</code>).</p>
+
+<!-- ─────────── 12 ─────────── -->
+<h2 id="deploy"><span class="num">12</span>Deploy &amp; CI/CD <span class="tag core">NÚCLEO</span></h2>
+<h4>Automação de dados — <code>.github/workflows/prefetch.yml</code></h4>
+<p>Um cron mensal (com <em>retries</em> nos dias 1, 3 e 10, porque a publicação do órgão atrasa) roda o
+robô Python, e um passo final faz commit de <code>/data</code> apenas se houve mudança
+(<code>git diff --staged --quiet</code>). O workflow precisa de permissão <code>contents: write</code>.</p>
+<pre><code><span class="k">on</span>:
+  schedule:
+    - cron: <span class="s">'0 6 1 * *'</span>   <span class="c"># dia 1, 06:00 UTC</span>
+    - cron: <span class="s">'0 6 3 * *'</span>   <span class="c"># retry dia 3</span>
+    - cron: <span class="s">'0 6 10 * *'</span>  <span class="c"># retry dia 10</span>
+  workflow_dispatch: {}       <span class="c"># botão manual</span></code></pre>
+
+<h4>O push que vira deploy</h4>
+<p>O commit do robô no <code>main</code> dispara o <strong>auto-deploy da Vercel</strong>. Não há passo de
+deploy manual no caminho feliz: <em>órgão publica → robô baixa → git commit → Vercel builda → produção
+atualizada</em>, sem intervenção humana. Detalhe de build: como os Parquet precisam existir no
+<em>runtime</em> da função, o <code>next.config</code> usa <code>outputFileTracingIncludes</code> para
+garantir que <code>/data</code> seja empacotado com as route handlers.</p>
+
+<!-- ─────────── 13 ─────────── -->
+<h2 id="generalizar"><span class="num">13</span>Generalizar o framework para outro setor</h2>
+<p>Toda a documentação acima existe para tornar esta seção operacional. Como o núcleo não conhece o
+domínio, portar a plataforma para <strong>outra fonte de dados pública setorial</strong> é um exercício de
+preencher os pontos de extensão — não de reescrever a aplicação. O mapa de troca:</p>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Ponto de extensão</th><th>Arquivo</th><th>O que muda</th><th>Reaproveita?</th></tr></thead>
+  <tbody>
+    <tr><td>Robô de ingestão</td><td><code>scripts/prefetch_data.py</code></td><td>Biblioteca cliente do novo órgão; lista de relatórios/séries; formato de período.</td><td><span class="tag domain">reescrever</span></td></tr>
+    <tr><td>Dicionário de domínio</td><td><code>lib/constants.ts</code></td><td>Módulos, variáveis, segmentos, cores, índices, rótulos, limiares de materialidade.</td><td><span class="tag domain">reescrever</span></td></tr>
+    <tr><td>Regra de classificação</td><td><code>classifySegment()</code> em <code>lib/data.ts</code></td><td>Critério de segmentação das entidades do novo setor.</td><td><span class="tag domain">ajustar</span></td></tr>
+    <tr><td>Fórmulas de índices</td><td><code>/api/indices/route.ts</code></td><td>O <code>switch</code> de numerador/denominador por indicador do setor.</td><td><span class="tag domain">ajustar</span></td></tr>
+    <tr><td>Leitor de Parquet + cache</td><td><code>readParquet</code>, LRU</td><td>Nada.</td><td><span class="tag core">como está</span></td></tr>
+    <tr><td>Funções de extração</td><td><code>extractVariable</code> &amp; cia.</td><td>Nada, se o formato "tabela longa" for mantido.</td><td><span class="tag core">como está</span></td></tr>
+    <tr><td>Handlers genéricos</td><td><code>/api/ifdata/[report]</code>, <code>/api/quarter</code></td><td>Nada.</td><td><span class="tag core">como está</span></td></tr>
+    <tr><td>Hook de dados</td><td><code>useModuleData</code></td><td>Nada.</td><td><span class="tag core">como está</span></td></tr>
+    <tr><td>Componentes de visualização</td><td><code>components/**</code></td><td>Nada (recebem dados genéricos).</td><td><span class="tag core">como está</span></td></tr>
+    <tr><td>Design system</td><td>CSS vars + Tailwind</td><td>Opcional: paleta/marca.</td><td><span class="tag core">como está</span></td></tr>
+    <tr><td>Deploy / CI</td><td><code>prefetch.yml</code>, Vercel</td><td>Só o cron e o passo de instalação.</td><td><span class="tag core">como está</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note core">
+  <span class="lbl">A regra de ouro da portabilidade</span>
+  <p>Se a nova fonte puder ser reduzida ao formato <strong>tabela longa</strong> — uma linha por
+  (entidade × métrica × período), com uma dimensão de cadastro à parte — então todo o núcleo se aplica
+  sem alteração. O trabalho de portar concentra-se em <strong>dois arquivos</strong>: o robô de ingestão
+  e o dicionário de constantes. Essa é a promessa do framework.</p>
+</div>
+
+<h4>Roteiro conceitual de adaptação</h4>
+<ol class="body">
+  <li>Mapear as entidades do novo setor (o "cadastro") e sua regra de segmentação.</li>
+  <li>Mapear os "relatórios" e suas métricas para o formato tabela longa; definir o conceito de período.</li>
+  <li>Reescrever o robô de ingestão contra a API do novo órgão, preservando o contrato de saída (§5).</li>
+  <li>Preencher <code>constants.ts</code>: módulos, variáveis, índices, cores, limiares.</li>
+  <li>Ajustar <code>classifySegment</code> e o <code>switch</code> de índices; rodar a aplicação — os
+  módulos aparecem sozinhos.</li>
+</ol>
+
+<!-- ─────────── 14 ─────────── -->
+<h2 id="checklist"><span class="num">14</span>Checklist de replicação</h2>
+<div class="grid g2">
+  <div class="card">
+    <h4>Fundação (núcleo)</h4>
+    <p>☐ <code>create-next-app</code> (TS + Tailwind + App Router)<br>
+       ☐ Copiar <code>lib/data.ts</code>, <code>formatting.ts</code>, <code>types.ts</code>, <code>slugify.ts</code><br>
+       ☐ Copiar <code>hooks/</code> e <code>components/</code><br>
+       ☐ Copiar handlers genéricos <code>/api/quarter</code>, <code>/api/ifdata/[report]</code><br>
+       ☐ Portar CSS vars + config do Tailwind</p>
+  </div>
+  <div class="card">
+    <h4>Domínio (por setor)</h4>
+    <p>☐ Escrever o robô de ingestão + <code>requirements.txt</code><br>
+       ☐ Preencher <code>constants.ts</code> (módulos, variáveis, índices)<br>
+       ☐ Ajustar <code>classifySegment</code> e o <code>switch</code> de índices<br>
+       ☐ Gerar o primeiro lote de <code>/data</code> e commitar<br>
+       ☐ Configurar <code>prefetch.yml</code> + permissões do repositório<br>
+       ☐ Conectar à Vercel e validar cada módulo ponta a ponta</p>
+  </div>
+</div>
+
+<!-- ─────────── 15 ─────────── -->
+<h2 id="glossario"><span class="num">15</span>Glossário</h2>
+<div class="kv">
+  <dt>Tabela longa</dt><dd>Formato <em>tidy</em>: uma linha por (entidade × métrica), a métrica sendo um valor de filtro e não uma coluna. É o que permite ao mesmo código servir N variáveis.</dd>
+  <dt>Anualização</dt><dd>Somar 4 períodos consecutivos de um fluxo (ex.: DRE) para obter o acumulado de 12 meses.</dd>
+  <dt>Materialidade</dt><dd>Filtro de porte que descarta entidades irrelevantes antes de plotar.</dd>
+  <dt>Visão consolidada</dt><dd>Nível de agregação que evita contar a mesma entidade mais de uma vez ("PRUDENCIAL" na fonte atual).</dd>
+  <dt>Slug</dt><dd>Nome normalizado (sem acento, minúsculo) que endereça o arquivo de uma série; deve casar entre ingestão e leitura.</dd>
+  <dt>Manifesto</dt><dd><code>manifest.json</code>: inventário de período, trimestres e arquivos — o índice do lote de dados.</dd>
+  <dt>SWR</dt><dd><em>stale-while-revalidate</em>: serve o cache e revalida em segundo plano — usado tanto na CDN quanto no cliente.</dd>
+</div>
+
+<div class="footdoc">
+  Laboratório de Dados Públicos · Documento de arquitetura e framework de replicação<br>
+  Núcleo genérico (Next.js · TypeScript · hyparquet · SWR · Plotly · Vercel) desacoplado da camada de domínio ·
+  Desenvolvido para fins educacionais.
+</div>
+
+</main>
+</div>
+</body>
+</html>
