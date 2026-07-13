@@ -18,6 +18,7 @@ import {
   RELATORIO_CREDITO_PF,
   RELATORIO_CREDITO_PJ,
   RELATORIO_CREDITO_GEO,
+  TIPO_PRUDENCIAL,
 } from "@/lib/constants";
 
 export const runtime = "nodejs";
@@ -48,8 +49,8 @@ export async function GET(
 
   let data;
 
-  // Credit reports use a different extraction pattern
-  // Note: prefetched files use tipo=1 (all types bundled)
+  // Credit reports use a different extraction pattern.
+  // Note: credit reports (Geo/PF/PJ) only exist at tipo=1 in IF.data.
   if (report === RELATORIO_CREDITO_PF) {
     const varDef = MODULO3_VARS.find((v) => v.key === variableKey);
     if (!varDef) {
@@ -79,7 +80,7 @@ export async function GET(
       const quarters = getLastNQuarters(quarter, 4);
       data = await extractVariableAnnualized(quarters, report, nomeColuna, institutions);
     } else {
-      data = await extractVariable(quarter, 1, report, nomeColuna, institutions);
+      data = await extractVariable(quarter, TIPO_PRUDENCIAL, report, nomeColuna, institutions);
     }
   }
 

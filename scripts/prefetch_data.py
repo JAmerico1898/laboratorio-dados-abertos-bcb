@@ -47,7 +47,7 @@ def find_latest_quarter_raw():
             y -= 1
 
     for anomes in candidates:
-        for tipo in [1, 2]:
+        for tipo in [3, 1, 2]:
             try:
                 df = ep.get(AnoMes=anomes, TipoInstituicao=tipo, Relatorio=1)
                 if df is not None and not df.empty:
@@ -235,7 +235,7 @@ def main():
     # latest-quarter marker once the cadastro for this quarter is available.
     # Advancing it early makes the app build empty institution tables and fail.
     log.info(f"Step 2: Fetching Cadastro ({latest})...")
-    cadastro_ok = fetch_and_save_cadastro(ep_cad, latest)
+    cadastro_ok = fetch_and_save_cadastro(ep_cad, latest, max_retries=5)
     if cadastro_ok:
         (DATA_DIR / "latest_quarter.txt").write_text(str(latest))
     else:
@@ -244,30 +244,36 @@ def main():
             f"latest_quarter.txt; app keeps serving the last complete quarter."
         )
 
-    # 4. Valores — all reports, latest quarter, tipo=1
-    reports = [
-        (1, "Resumo"), (2, "Ativo"), (3, "Passivo"), (4, "DRE"),
+    # 4. Valores — standard reports use tipo=3 (Conglomerado Prudencial).
+    # After BCB's 2026 IF.data restructuring the consolidated values are keyed
+    # by the lead institution's CNPJ8 and only appear under tipo=3 (the old
+    # "C..." conglomerate codes and the bundled tipo=1 view were removed).
+    standard_reports = [(1, "Resumo"), (2, "Ativo"), (3, "Passivo"), (4, "DRE")]
+    log.info(f"Step 3: Fetching Valores tipo=3 (standard reports, {latest})...")
+    for rel, name in standard_reports:
+        log.info(f"  Relatorio {rel} ({name})...")
+        fetch_and_save_valores(ep_val, latest, tipo=3, relatorio=rel)
+        time.sleep(1)
+
+    # 5. tipo=1 reports: credit (Geo/PF/PJ) only exist here, and Resumo (r1) at
+    # tipo=1 carries the "Índice de Basileia" capital ratio, which is not present
+    # in the consolidated tipo=3 Resumo.
+    tipo1_reports = [
+        (1, "Resumo (Basileia)"),
         (9, "Credito Geo"), (11, "Credito PF"), (13, "Credito PJ"),
     ]
-
-    log.info(f"Step 3: Fetching Valores tipo=1 ({latest})...")
-    for rel, name in reports:
+    log.info(f"Step 4: Fetching Valores tipo=1 (credit + Basileia, {latest})...")
+    for rel, name in tipo1_reports:
         log.info(f"  Relatorio {rel} ({name})...")
         fetch_and_save_valores(ep_val, latest, tipo=1, relatorio=rel)
         time.sleep(1)
 
-    # 5. Tipo 2 for credit reports
-    log.info(f"Step 4: Fetching Valores tipo=2 for credit ({latest})...")
-    for rel in [11, 13]:
-        fetch_and_save_valores(ep_val, latest, tipo=2, relatorio=rel)
-        time.sleep(1)
-
-    # 6. Previous quarters (annualization: Resumo + DRE)
+    # 6. Previous quarters (annualization: Resumo + DRE, tipo=3)
     log.info("Step 5: Previous quarters for annualization...")
     for q in quarters[1:]:
         log.info(f"  Quarter {q}:")
         for rel in [1, 4]:
-            fetch_and_save_valores(ep_val, q, tipo=1, relatorio=rel)
+            fetch_and_save_valores(ep_val, q, tipo=3, relatorio=rel)
             time.sleep(1)
 
     # 7. Taxas de Juros

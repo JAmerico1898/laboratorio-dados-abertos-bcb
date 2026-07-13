@@ -50,22 +50,25 @@ export function formatAnomes(anomes: number): string {
 
 /**
  * Format the annualized DRE period label.
- * E.g., anomes=202509 → "Dez/2024 a Set/2025"
+ * The DRE is annualized over the 12 months ending at `anomes`, so the window
+ * starts the month after the same month one year earlier.
+ * E.g., anomes=202603 → "Abril/2025 a Março/2026"
  */
 export function formatDrePeriod(anomes: number): string {
-  const quarters = getLastNQuarters(anomes, 4);
-  const oldest = quarters[quarters.length - 1];
-  // The period starts from the quarter before the oldest
-  const startYear = Math.floor(oldest / 100);
-  const startMonth = oldest % 100;
-  let prevMonth = startMonth - 3;
-  let prevYear = startYear;
-  if (prevMonth <= 0) {
-    prevMonth += 12;
-    prevYear -= 1;
+  const monthNamesFull: Record<number, string> = {
+    1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril",
+    5: "Maio", 6: "Junho", 7: "Julho", 8: "Agosto",
+    9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro",
+  };
+  const endYear = Math.floor(anomes / 100);
+  const endMonth = anomes % 100;
+  let startMonth = endMonth + 1;
+  let startYear = endYear - 1;
+  if (startMonth > 12) {
+    startMonth -= 12;
+    startYear += 1;
   }
-  const start = prevYear * 100 + prevMonth;
-  return `${formatAnomes(start)} a ${formatAnomes(anomes)}`;
+  return `${monthNamesFull[startMonth]}/${startYear} a ${monthNamesFull[endMonth]}/${endYear}`;
 }
 
 /**

@@ -177,6 +177,14 @@ export const RELATORIO_CREDITO_GEO = 9;
 export const RELATORIO_CREDITO_PF = 11;
 export const RELATORIO_CREDITO_PJ = 13;
 
+// TipoInstituicao selection after BCB's 2026 IF.data restructuring.
+// Consolidated "Conglomerado Prudencial" values (Resumo/Ativo/Passivo/DRE) are
+// now reported under the lead institution's CNPJ8 code at tipo=3. The old "C..."
+// conglomerate codes and the everything-bundled tipo=1 view were removed.
+// Credit reports (Geo/PF/PJ) only exist at tipo=1.
+export const TIPO_PRUDENCIAL = 3;
+export const TIPO_CREDITO = 1;
+
 export const TIPO_INSTITUICAO_TODAS = [1, 2, 3];
 export const TIPO_INST_CREDITO = 2;
 

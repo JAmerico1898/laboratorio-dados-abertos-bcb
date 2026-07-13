@@ -20,6 +20,7 @@ import {
   MIN_ATIVO_TOTAL,
   MIN_PL,
   BANK_SHORT_NAMES,
+  TIPO_PRUDENCIAL,
 } from "./constants";
 
 // ─────────────────────────────────────────────
@@ -160,7 +161,17 @@ export function getShortName(fullName: string): string {
   if (fullName in BANK_SHORT_NAMES) {
     return BANK_SHORT_NAMES[fullName];
   }
-  const name = fullName.replace("BCO ", "").replace("S.A.", "").trim();
+  // Post-2026 IF.data reports full "BANCO ..." legal names; the lookup table
+  // predates that and keys on the old "BCO ..." abbreviation. Normalize first.
+  const normalized = fullName.replace(/^BANCO /, "BCO ");
+  if (normalized in BANK_SHORT_NAMES) {
+    return BANK_SHORT_NAMES[normalized];
+  }
+  const name = fullName
+    .replace(/^BANCO /, "")
+    .replace("BCO ", "")
+    .replace("S.A.", "")
+    .trim();
   return name.length > 20 ? name.slice(0, 20) : name;
 }
 
@@ -196,18 +207,21 @@ export async function buildInstitutionTable(
     }))
     .filter((row) => row.Segmento !== "Outros");
 
-  // Filter to PRUDENCIAL only
-  const prudencial = withSegment.filter((row) =>
-    row.NomeInstituicao?.toUpperCase().includes("PRUDENCIAL")
+  // BCB restructured IF.data: consolidated (Conglomerado Prudencial) values are
+  // now reported under the lead institution's CNPJ8 code (e.g. "60701190"),
+  // not the old "C..." conglomerate codes. Keep the CNPJ8-keyed rows and drop
+  // the legacy "C..." registry entries, which no longer appear in the valores.
+  const individuals = withSegment.filter(
+    (row) => !String(row.CodInst).startsWith("C")
   );
 
-  if (prudencial.length === 0) return [];
+  if (individuals.length === 0) return [];
 
   // Build display names and deduplicate
   const seen = new Set<number>();
   const result: InstitutionBase[] = [];
 
-  for (const row of prudencial) {
+  for (const row of individuals) {
     if (seen.has(row.CodInst)) continue;
     seen.add(row.CodInst);
 
@@ -320,7 +334,7 @@ export async function extractVariableAnnualized(
   for (const anomes of anomesList) {
     const extracted = await extractVariable(
       anomes,
-      1,
+      TIPO_PRUDENCIAL,
       relatorio,
       nomeColuna,
       institutions
@@ -425,8 +439,8 @@ export async function applyMaterialityFilter(
 ): Promise<InstitutionRow[]> {
   if (data.length === 0) return data;
 
-  // Read resumo data for Ativo Total and PL
-  const resumoFile = `valores_${anomes}_t1_r1.parquet`;
+  // Read resumo data for Ativo Total and PL (consolidated prudential view)
+  const resumoFile = `valores_${anomes}_t${TIPO_PRUDENCIAL}_r1.parquet`;
   const resumoRows = await readParquet<{
     CodInst: number;
     NomeColuna: string;

@@ -13,6 +13,7 @@ import {
   RELATORIO_ATIVO,
   RELATORIO_RESULTADO,
   INDICES,
+  TIPO_PRUDENCIAL,
 } from "@/lib/constants";
 import type { InstitutionRow } from "@/lib/types";
 
@@ -47,8 +48,11 @@ export async function GET(request: NextRequest) {
   const quarters = getLastNQuarters(quarter, 4);
 
   // Helper to get a variable from a report
-  const getVar = async (nomeColuna: string, relatorio: number) =>
-    extractVariable(quarter, 1, relatorio, nomeColuna, institutions);
+  const getVar = async (
+    nomeColuna: string,
+    relatorio: number,
+    tipo: number = TIPO_PRUDENCIAL
+  ) => extractVariable(quarter, tipo, relatorio, nomeColuna, institutions);
 
   const getVarAnnualized = async (nomeColuna: string, relatorio: number) =>
     extractVariableAnnualized(quarters, relatorio, nomeColuna, institutions);
@@ -62,7 +66,9 @@ export async function GET(request: NextRequest) {
   // Compute the requested index
   switch (indexKey) {
     case "basileia": {
-      const data = await getVar("Índice de Basileia", RELATORIO_RESUMO);
+      // The Basileia capital ratio is only published at the individual-institution
+      // level (tipo=1); it is absent from the consolidated tipo=3 report.
+      const data = await getVar("Índice de Basileia", RELATORIO_RESUMO, 1);
       const filtered = filterBySegments(
         await applyMaterialityFilter(data, quarter, institutions),
         segments
@@ -71,7 +77,9 @@ export async function GET(request: NextRequest) {
         CodInst: d.CodInst,
         NomeReduzido: d.NomeReduzido,
         Segmento: d.Segmento,
-        value: d.Saldo,
+        // BCB reports Basileia as a fraction (0.237); the other "pct" indices are
+        // already scaled to percentage points, so scale this to match.
+        value: d.Saldo * 100,
       }));
       break;
     }
