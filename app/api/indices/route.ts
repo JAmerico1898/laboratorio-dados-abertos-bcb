@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getLatestQuarter,
   buildInstitutionTable,
+  buildCreditInstitutionTable,
   extractVariable,
   extractVariableAnnualized,
   filterBySegments,
@@ -14,6 +15,7 @@ import {
   RELATORIO_RESULTADO,
   INDICES,
   TIPO_PRUDENCIAL,
+  TIPO_CREDITO,
 } from "@/lib/constants";
 import type { InstitutionRow } from "@/lib/types";
 
@@ -66,13 +68,20 @@ export async function GET(request: NextRequest) {
   // Compute the requested index
   switch (indexKey) {
     case "basileia": {
-      // The Basileia capital ratio is only published at the individual-institution
-      // level (tipo=1); it is absent from the consolidated tipo=3 report.
-      const data = await getVar("Índice de Basileia", RELATORIO_RESUMO, 1);
-      const filtered = filterBySegments(
-        await applyMaterialityFilter(data, quarter, institutions),
-        segments
+      // The Prudencial Basel ratio (with the big banks) is absent from the public
+      // OData Resumo; it comes from the IF.data internal report 115 (tipo=1009),
+      // written to r5 by scripts/fetch_ifdata_credit.py. Its institution registry
+      // is the credit/prudential cadastro, not the tipo=3 one used by getVar, and
+      // the CNPJ8 materiality filter doesn't apply to prudential codes.
+      const creditInstitutions = await buildCreditInstitutionTable(quarter);
+      const data = await extractVariable(
+        quarter,
+        TIPO_CREDITO,
+        5,
+        "Índice de Basileia",
+        creditInstitutions
       );
+      const filtered = filterBySegments(data, segments);
       result = filtered.map((d) => ({
         CodInst: d.CodInst,
         NomeReduzido: d.NomeReduzido,
