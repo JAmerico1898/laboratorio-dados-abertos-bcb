@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getLatestQuarter,
   buildInstitutionTable,
+  buildCreditInstitutionTable,
   extractVariable,
   extractVariableAnnualized,
   extractCreditVariable,
@@ -19,6 +20,7 @@ import {
   RELATORIO_CREDITO_PJ,
   RELATORIO_CREDITO_GEO,
   TIPO_PRUDENCIAL,
+  TIPO_CREDITO,
 } from "@/lib/constants";
 
 export const runtime = "nodejs";
@@ -39,7 +41,17 @@ export async function GET(
   const segments = segmentsStr.split(",").filter(Boolean);
 
   const quarter = getLatestQuarter();
-  const institutions = await buildInstitutionTable(quarter);
+
+  const isCredit =
+    report === RELATORIO_CREDITO_PF ||
+    report === RELATORIO_CREDITO_PJ ||
+    report === RELATORIO_CREDITO_GEO;
+
+  // Credit reports use the IF.data internal API's prudential-coded registry
+  // (tipo=1009); the balance-sheet reports use the OData registry (CNPJ8).
+  const institutions = isCredit
+    ? await buildCreditInstitutionTable(quarter)
+    : await buildInstitutionTable(quarter);
   if (institutions.length === 0) {
     return NextResponse.json(
       { institutions: [], total: 0, systemTotal: 0, count: 0, top5Share: 0, quarter, variable: variableKey },
@@ -56,19 +68,19 @@ export async function GET(
     if (!varDef) {
       return NextResponse.json({ error: `Unknown variable: ${variableKey}` }, { status: 400 });
     }
-    data = await extractCreditVariable(quarter, 1, report, varDef.grupo, institutions);
+    data = await extractCreditVariable(quarter, TIPO_CREDITO, report, varDef.grupo, institutions);
   } else if (report === RELATORIO_CREDITO_PJ) {
     const varDef = MODULO4_VARS.find((v) => v.key === variableKey);
     if (!varDef) {
       return NextResponse.json({ error: `Unknown variable: ${variableKey}` }, { status: 400 });
     }
-    data = await extractCreditVariable(quarter, 1, report, varDef.grupo, institutions);
+    data = await extractCreditVariable(quarter, TIPO_CREDITO, report, varDef.grupo, institutions);
   } else if (report === RELATORIO_CREDITO_GEO) {
     const varDef = MODULO6_VARS.find((v) => v.key === variableKey);
     if (!varDef) {
       return NextResponse.json({ error: `Unknown variable: ${variableKey}` }, { status: 400 });
     }
-    data = await extractVariable(quarter, 1, report, varDef.nomeColuna, institutions);
+    data = await extractVariable(quarter, TIPO_CREDITO, report, varDef.nomeColuna, institutions);
   } else {
     // Standard reports (1, 2, 3, 4)
     const nomeColuna = VAR_KEY_MAP[variableKey];
@@ -84,8 +96,11 @@ export async function GET(
     }
   }
 
-  // Apply materiality filter
-  data = await applyMaterialityFilter(data, quarter, institutions);
+  // Materiality filter reads the consolidated Resumo (balance-sheet, CNPJ8) and
+  // only applies to those reports; credit uses prudential codes, so skip it.
+  if (!isCredit) {
+    data = await applyMaterialityFilter(data, quarter, institutions);
+  }
 
   // Compute system-wide total (all segments) before filtering
   const { total: systemTotal } = computeSummary(data);

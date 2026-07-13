@@ -181,9 +181,11 @@ export const RELATORIO_CREDITO_PJ = 13;
 // Consolidated "Conglomerado Prudencial" values (Resumo/Ativo/Passivo/DRE) are
 // now reported under the lead institution's CNPJ8 code at tipo=3. The old "C..."
 // conglomerate codes and the everything-bundled tipo=1 view were removed.
-// Credit reports (Geo/PF/PJ) only exist at tipo=1.
+// Credit reports (Geo/PF/PJ) are not published at prudential level by the public
+// OData API, so they are sourced from the IF.data internal API (type id 1009)
+// and stored as valores_{q}_t1009_r{9,11,13}.parquet.
 export const TIPO_PRUDENCIAL = 3;
-export const TIPO_CREDITO = 1;
+export const TIPO_CREDITO = 1009;
 
 export const TIPO_INSTITUICAO_TODAS = [1, 2, 3];
 export const TIPO_INST_CREDITO = 2;

@@ -255,18 +255,20 @@ def main():
         fetch_and_save_valores(ep_val, latest, tipo=3, relatorio=rel)
         time.sleep(1)
 
-    # 5. tipo=1 reports: credit (Geo/PF/PJ) only exist here, and Resumo (r1) at
-    # tipo=1 carries the "Índice de Basileia" capital ratio, which is not present
-    # in the consolidated tipo=3 Resumo.
-    tipo1_reports = [
-        (1, "Resumo (Basileia)"),
-        (9, "Credito Geo"), (11, "Credito PF"), (13, "Credito PJ"),
-    ]
-    log.info(f"Step 4: Fetching Valores tipo=1 (credit + Basileia, {latest})...")
-    for rel, name in tipo1_reports:
-        log.info(f"  Relatorio {rel} ({name})...")
-        fetch_and_save_valores(ep_val, latest, tipo=1, relatorio=rel)
-        time.sleep(1)
+    # 5. Resumo (r1) at tipo=1 carries the "Índice de Basileia" capital ratio,
+    # which is not present in the consolidated tipo=3 Resumo.
+    log.info(f"Step 4: Fetching Valores tipo=1 Resumo (Basileia, {latest})...")
+    fetch_and_save_valores(ep_val, latest, tipo=1, relatorio=1)
+
+    # 6. Credit reports (Geo/PF/PJ) are not published at the Conglomerado
+    # Prudencial level by the public OData API, so they are reconstructed from
+    # the IF.data internal API (type id 1009), which includes the big banks.
+    log.info(f"Step 5: Fetching credit reports from IF.data internal API ({latest})...")
+    try:
+        from fetch_ifdata_credit import fetch_credit
+        fetch_credit(latest, str(DATA_DIR), log=log)
+    except Exception as e:
+        log.error(f"  Credit fetch failed: {e}")
 
     # 6. Previous quarters (annualization: Resumo + DRE, tipo=3)
     log.info("Step 5: Previous quarters for annualization...")

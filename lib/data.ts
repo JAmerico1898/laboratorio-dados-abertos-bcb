@@ -243,6 +243,51 @@ export async function buildInstitutionTable(
 }
 
 // ─────────────────────────────────────────────
+// BUILD CREDIT INSTITUTION TABLE
+// The credit reports come from the IF.data internal API (Conglomerado
+// Prudencial, tipo=1009) and use their own prudential-coded registry
+// (cadastro_credito_{anomes}.parquet), distinct from the balance-sheet
+// registry's CNPJ8 codes.
+// ─────────────────────────────────────────────
+
+export async function buildCreditInstitutionTable(
+  anomes: number
+): Promise<InstitutionBase[]> {
+  const cacheKey = `institutions:credit:${anomes}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return cached as InstitutionBase[];
+
+  const rows = await readParquet<CadastroRow>(`cadastro_credito_${anomes}.parquet`);
+  if (rows.length === 0) return [];
+
+  const seen = new Set<string>();
+  const result: InstitutionBase[] = [];
+
+  for (const row of rows) {
+    const segmento = classifySegment(row);
+    if (segmento === "Outros") continue;
+    const code = String(row.CodInst);
+    if (seen.has(code)) continue;
+    seen.add(code);
+
+    const nomeDisplay = row.NomeInstituicao
+      .replace(/\s*[-–]\s*PRUDENCIAL/i, "")
+      .trim();
+
+    result.push({
+      CodInst: row.CodInst,
+      NomeInstituicao: row.NomeInstituicao,
+      NomeDisplay: nomeDisplay,
+      NomeReduzido: getShortName(nomeDisplay),
+      Segmento: segmento,
+    });
+  }
+
+  cache.set(cacheKey, result);
+  return result;
+}
+
+// ─────────────────────────────────────────────
 // EXTRACT VARIABLE
 // Ported from data_utils.py:extract_variable()
 // ─────────────────────────────────────────────
