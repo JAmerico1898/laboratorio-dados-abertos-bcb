@@ -41,7 +41,7 @@ export async function GET(
   const institutions = await buildInstitutionTable(quarter);
   if (institutions.length === 0) {
     return NextResponse.json(
-      { institutions: [], total: 0, count: 0, top5Share: 0, quarter, variable: variableKey },
+      { institutions: [], total: 0, systemTotal: 0, count: 0, top5Share: 0, quarter, variable: variableKey },
       { headers: { "Cache-Control": "s-maxage=3600, stale-while-revalidate=86400" } }
     );
   }

@@ -224,17 +224,25 @@ def main():
     quarters = get_last_n_quarters(latest, n=4)
     log.info(f"  Latest: {latest}, Quarters: {quarters}")
 
-    (DATA_DIR / "latest_quarter.txt").write_text(str(latest))
-
     # 2. Setup API
     from bcb.odata import IFDATA
     ifdata = IFDATA()
     ep_val = ifdata.get_endpoint("IfDataValores")
     ep_cad = ifdata.get_endpoint("IfDataCadastro")
 
-    # 3. Cadastro
+    # 3. Cadastro — the institution registry every module depends on.
+    # BCB publishes the valores before the cadastro, so only advance the
+    # latest-quarter marker once the cadastro for this quarter is available.
+    # Advancing it early makes the app build empty institution tables and fail.
     log.info(f"Step 2: Fetching Cadastro ({latest})...")
-    fetch_and_save_cadastro(ep_cad, latest)
+    cadastro_ok = fetch_and_save_cadastro(ep_cad, latest)
+    if cadastro_ok:
+        (DATA_DIR / "latest_quarter.txt").write_text(str(latest))
+    else:
+        log.warning(
+            f"  Cadastro for {latest} unavailable — not advancing "
+            f"latest_quarter.txt; app keeps serving the last complete quarter."
+        )
 
     # 4. Valores — all reports, latest quarter, tipo=1
     reports = [

@@ -88,11 +88,39 @@ export async function readParquet<T = Record<string, unknown>>(
 
 export function getLatestQuarter(): number {
   const markerPath = join(DATA_DIR, "latest_quarter.txt");
+  let marked = 0;
   if (existsSync(markerPath)) {
     const val = parseInt(readFileSync(markerPath, "utf-8").trim(), 10);
-    if (val > 200000) return val;
+    if (val > 200000) marked = val;
   }
-  return 202509; // fallback
+
+  // The marker can point at a quarter whose institution registry (cadastro)
+  // isn't published yet — BCB releases the valores before the cadastro. Every
+  // module builds its institution table from the cadastro, so a marker without
+  // one makes the whole app return empty data. Fall back to the newest quarter
+  // that actually has a cadastro file.
+  if (marked && hasCadastro(marked)) return marked;
+
+  const latestWithCadastro = latestCadastroQuarter();
+  if (latestWithCadastro) return latestWithCadastro;
+
+  return marked || 202509; // last-resort fallback
+}
+
+function hasCadastro(anomes: number): boolean {
+  return existsSync(join(DATA_DIR, `cadastro_${anomes}.parquet`));
+}
+
+function latestCadastroQuarter(): number | null {
+  try {
+    const quarters = readdirSync(DATA_DIR)
+      .map((f) => /^cadastro_(\d{6})\.parquet$/.exec(f)?.[1])
+      .filter((q): q is string => Boolean(q))
+      .map((q) => parseInt(q, 10));
+    return quarters.length ? Math.max(...quarters) : null;
+  } catch {
+    return null;
+  }
 }
 
 // ─────────────────────────────────────────────
