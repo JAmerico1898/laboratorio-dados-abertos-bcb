@@ -330,11 +330,20 @@ export async function extractVariable(
       balances.set(row.CodInst, (balances.get(row.CodInst) ?? 0) + val);
     }
   } else {
+    // Prefer an exact full-name match; only fall back to prefix matching when the
+    // exact column is absent (BCB revises DRE parenthetical suffixes across
+    // periods). Prefix alone is ambiguous when sibling columns share a prefix —
+    // e.g. the four "Perda Esperada \n(e2|f2|g2|h2)" variants in the Ativo report,
+    // where a bare-prefix match would silently keep whichever row came last.
     const target = prefix(nomeColuna);
+    const hasExact = rows.some((row) => row.NomeColuna === nomeColuna);
     balances = new Map();
     for (const row of rows) {
       if (!validCodes.has(row.CodInst)) continue;
-      if (prefix(row.NomeColuna) !== target) continue;
+      const match = hasExact
+        ? row.NomeColuna === nomeColuna
+        : prefix(row.NomeColuna) === target;
+      if (!match) continue;
       const val = Number(row.Saldo);
       if (!isNaN(val)) {
         balances.set(row.CodInst, val);
