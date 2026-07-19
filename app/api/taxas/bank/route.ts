@@ -7,16 +7,17 @@ export const runtime = "nodejs";
 const DATA_DIR = join(process.cwd(), "data");
 
 /**
- * Returns a specific bank's rate and rank across all modalities.
- * Reads from pre-computed taxas_latest.json (~49KB) — instant.
+ * Returns a specific bank's rate and rank across all modalities of a segment.
+ * Reads from pre-computed taxas_latest.json — instant.
  *
- * GET /api/taxas/bank?name=BCO BANESTES S.A.
+ * GET /api/taxas/bank?name=BCO BANESTES S.A.&segment=pf|pj
  */
 export async function GET(request: NextRequest) {
   const bankName = request.nextUrl.searchParams.get("name");
   if (!bankName) {
     return NextResponse.json({ error: "name parameter required" }, { status: 400 });
   }
+  const segment = request.nextUrl.searchParams.get("segment") === "pj" ? "pj" : "pf";
 
   const filePath = join(DATA_DIR, "taxas_latest.json");
   if (!existsSync(filePath)) {
@@ -24,6 +25,7 @@ export async function GET(request: NextRequest) {
   }
 
   const data = JSON.parse(readFileSync(filePath, "utf-8"));
+  const part = data[segment] ?? { modalities: {} };
 
   const results: {
     modName: string;
@@ -32,7 +34,7 @@ export async function GET(request: NextRequest) {
     total: number;
   }[] = [];
 
-  for (const [, mod] of Object.entries(data.modalities) as [string, { name: string; total: number; entries: { bank: string; rateYear: number; rank: number }[] }][]) {
+  for (const [, mod] of Object.entries(part.modalities) as [string, { name: string; total: number; entries: { bank: string; rateYear: number; rank: number }[] }][]) {
     const entry = mod.entries.find((e) => e.bank === bankName);
     if (!entry) continue;
 

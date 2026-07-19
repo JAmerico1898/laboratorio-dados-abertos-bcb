@@ -80,26 +80,17 @@ export default function RankingsTab({ data, isLoading, error }: RankingsTabProps
     );
   }
 
-  const firstMod = Object.values(data.modalities)[0];
-  const refDate = firstMod?.latestDate
-    ? new Date(firstMod.latestDate).toLocaleDateString("pt-BR")
-    : "";
-
   return (
     <div className="space-y-8">
-      {refDate && (
-        <p className="font-mono text-xs text-text-muted">
-          📅 Data de referência:{" "}
-          <span className="font-bold text-accent-cyan">{refDate}</span>
-        </p>
-      )}
-
       {Object.entries(data.modalities).map(([slug, mod]) => {
         if (mod.top10.length === 0 && mod.bottom10.length === 0) return null;
         const totalIFs = new Set([
           ...mod.top10.map((r) => r.InstituicaoFinanceira),
           ...mod.bottom10.map((r) => r.InstituicaoFinanceira),
         ]).size;
+        const refDate = mod.latestDate
+          ? new Date(mod.latestDate).toLocaleDateString("pt-BR")
+          : "";
 
         return (
           <div key={slug}>
@@ -110,6 +101,11 @@ export default function RankingsTab({ data, isLoading, error }: RankingsTabProps
               <span className="text-xs text-text-muted">
                 ({totalIFs} IFs)
               </span>
+              {refDate && (
+                <span className="ml-auto font-mono text-xs text-text-muted">
+                  📅 <span className="font-bold text-accent-cyan">{refDate}</span>
+                </span>
+              )}
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>

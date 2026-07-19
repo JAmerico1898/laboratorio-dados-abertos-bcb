@@ -10,7 +10,7 @@ interface BankModality {
   total: number;
 }
 
-export default function BankTab() {
+export default function BankTab({ segment }: { segment: "pf" | "pj" }) {
   const [banks, setBanks] = useState<string[]>([]);
   const [loadingBanks, setLoadingBanks] = useState(true);
   const [selectedBank, setSelectedBank] = useState("");
@@ -19,14 +19,14 @@ export default function BankTab() {
 
   // Fetch bank list once (server caches it)
   useEffect(() => {
-    fetch("/api/taxas/banks")
+    fetch(`/api/taxas/banks?segment=${segment}`)
       .then((r) => r.json())
       .then((d) => {
         setBanks(d.banks ?? []);
         setLoadingBanks(false);
       })
       .catch(() => setLoadingBanks(false));
-  }, []);
+  }, [segment]);
 
   // Fetch bank details when selected (single API call, server reads from LRU cache)
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function BankTab() {
     let cancelled = false;
     setLoadingBank(true);
 
-    fetch(`/api/taxas/bank?name=${encodeURIComponent(selectedBank)}`)
+    fetch(`/api/taxas/bank?name=${encodeURIComponent(selectedBank)}&segment=${segment}`)
       .then((r) => r.json())
       .then((d) => {
         if (!cancelled) {
@@ -51,7 +51,7 @@ export default function BankTab() {
       });
 
     return () => { cancelled = true; };
-  }, [selectedBank]);
+  }, [selectedBank, segment]);
 
   if (loadingBanks) {
     return (

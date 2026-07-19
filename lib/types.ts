@@ -100,7 +100,7 @@ export interface ModalityDef {
   slug: string;
   name: string;
   type: "daily" | "monthly";
-  excludeFromRanking: boolean;
+  segmento: "pf" | "pj";
 }
 
 // ─────────────────────────────────────────────

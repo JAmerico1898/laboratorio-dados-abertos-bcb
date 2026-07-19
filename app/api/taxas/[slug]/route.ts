@@ -31,7 +31,16 @@ export async function GET(
   const typeParam = request.nextUrl.searchParams.get("type");
   const type = typeParam === "monthly" ? "monthly" : modality.type;
 
-  const rows = await readTaxas(slug, type);
+  const allRows = await readTaxas(slug, type);
+  // Dual-segment modalities (Cheque Especial, Desconto de Cheques) share one
+  // parquet; filter to the requested segment so the median series stays clean.
+  const segment = request.nextUrl.searchParams.get("segment");
+  const rows =
+    segment && allRows.length > 0 && "Segmento" in allRows[0]
+      ? allRows.filter(
+          (r) => (/JUR/i.test(String(r.Segmento ?? "")) ? "pj" : "pf") === segment
+        )
+      : allRows;
   if (rows.length === 0) {
     return NextResponse.json(
       { rates: [], latestDate: "", modalityName: modality.name },

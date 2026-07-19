@@ -8,11 +8,12 @@ import { SkeletonBox } from "@/components/ui/Skeleton";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-export default function ChartsTab() {
-  const [selectedMod, setSelectedMod] = useState(MODALITIES[2]?.slug ?? "");
+export default function ChartsTab({ segment }: { segment: "pf" | "pj" }) {
+  const mods = MODALITIES.filter((m) => m.segmento === segment);
+  const [selectedMod, setSelectedMod] = useState(mods[0]?.slug ?? "");
 
   const { data, isLoading } = useSWR(
-    selectedMod ? `/api/taxas/${selectedMod}` : null,
+    selectedMod ? `/api/taxas/${selectedMod}?segment=${segment}` : null,
     fetcher,
     { revalidateOnFocus: false, dedupingInterval: 300000 }
   );
@@ -59,7 +60,7 @@ export default function ChartsTab() {
   }
 
   const modName =
-    MODALITIES.find((m) => m.slug === selectedMod)?.name ?? selectedMod;
+    mods.find((m) => m.slug === selectedMod)?.name ?? selectedMod;
 
   return (
     <>
@@ -72,7 +73,7 @@ export default function ChartsTab() {
           onChange={(e) => setSelectedMod(e.target.value)}
           className="w-full rounded-[10px] border border-border bg-bg-card px-4 py-2.5 text-sm text-text-primary focus:border-accent-cyan focus:outline-none"
         >
-          {MODALITIES.map((m) => (
+          {mods.map((m) => (
             <option key={m.slug} value={m.slug}>
               {m.name}
             </option>

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 
@@ -17,21 +17,24 @@ interface ModData {
   name: string;
   latestDate: string;
   total: number;
-  excludeFromRanking: boolean;
   entries: ModEntry[];
 }
 
 /**
  * Batch rankings endpoint.
  * Reads from pre-computed taxas_latest.json — instant response.
+ * GET /api/taxas/rankings?segment=pf|pj  (defaults to pf)
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const segment = request.nextUrl.searchParams.get("segment") === "pj" ? "pj" : "pf";
+
   const filePath = join(DATA_DIR, "taxas_latest.json");
   if (!existsSync(filePath)) {
     return NextResponse.json({ modalities: {} });
   }
 
   const data = JSON.parse(readFileSync(filePath, "utf-8"));
+  const part = data[segment] ?? { modalities: {} };
 
   const modalities: Record<
     string,
@@ -43,9 +46,7 @@ export async function GET() {
     }
   > = {};
 
-  for (const [slug, mod] of Object.entries(data.modalities) as [string, ModData][]) {
-    if (mod.excludeFromRanking) continue;
-
+  for (const [slug, mod] of Object.entries(part.modalities) as [string, ModData][]) {
     // entries are already sorted ascending by rate (rank 1 = lowest)
     const top10 = mod.entries.slice(0, 10).map((e) => ({
       InstituicaoFinanceira: e.bank,

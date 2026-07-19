@@ -560,20 +560,38 @@ export const INDICES: IndexDef[] = [
 // ─────────────────────────────────────────────
 // Slugs MUST match actual Parquet filenames (produced by Python slugify on full modality name)
 export const MODALITIES: ModalityDef[] = [
-  { slug: "financiamento_imobiliario_com_taxas_reguladas_prefixado", name: "Financ. Imobiliário Regulado Pré", type: "monthly", excludeFromRanking: true },
-  { slug: "financiamento_imobiliario_com_taxas_de_mercado_prefixado", name: "Financ. Imobiliário Mercado Pré", type: "monthly", excludeFromRanking: true },
-  { slug: "credito_pessoal_consignado_publico_prefixado", name: "Consignado Público", type: "daily", excludeFromRanking: false },
-  { slug: "credito_pessoal_consignado_inss_prefixado", name: "Consignado INSS", type: "daily", excludeFromRanking: false },
-  { slug: "credito_pessoal_consignado_privado_prefixado", name: "Consignado Privado", type: "daily", excludeFromRanking: false },
-  { slug: "credito_pessoal_nao_consignado_prefixado", name: "Crédito Pessoal Não-Consignado", type: "daily", excludeFromRanking: false },
-  { slug: "aquisicao_de_veiculos_prefixado", name: "Aquisição de Veículos", type: "daily", excludeFromRanking: false },
-  { slug: "cheque_especial_prefixado", name: "Cheque Especial", type: "daily", excludeFromRanking: false },
-  { slug: "cartao_de_credito_rotativo_total_prefixado", name: "Cartão de Crédito Rotativo", type: "daily", excludeFromRanking: true },
-  { slug: "cartao_de_credito_parcelado_prefixado", name: "Cartão de Crédito Parcelado", type: "daily", excludeFromRanking: true },
-  { slug: "capital_de_giro_com_prazo_ate_365_dias_prefixado", name: "Capital de Giro até 365 dias", type: "daily", excludeFromRanking: false },
-  { slug: "capital_de_giro_com_prazo_superior_a_365_dias_prefixado", name: "Capital de Giro acima de 365 dias", type: "daily", excludeFromRanking: false },
-  { slug: "conta_garantida_prefixado", name: "Conta Garantida", type: "daily", excludeFromRanking: true },
-  { slug: "desconto_de_duplicatas_prefixado", name: "Desconto de Duplicatas", type: "daily", excludeFromRanking: true },
+  // ── Pessoa Física — diárias ──
+  { slug: "cheque_especial_prefixado", name: "Cheque Especial", type: "daily", segmento: "pf" },
+  { slug: "cartao_de_credito_rotativo_total_prefixado", name: "Cartão de Crédito Rotativo", type: "daily", segmento: "pf" },
+  { slug: "cartao_de_credito_parcelado_prefixado", name: "Cartão de Crédito Parcelado", type: "daily", segmento: "pf" },
+  { slug: "credito_pessoal_nao_consignado_prefixado", name: "Crédito Pessoal Não-Consignado", type: "daily", segmento: "pf" },
+  { slug: "credito_pessoal_consignado_publico_prefixado", name: "Consignado Público", type: "daily", segmento: "pf" },
+  { slug: "credito_pessoal_consignado_privado_prefixado", name: "Consignado Privado", type: "daily", segmento: "pf" },
+  { slug: "credito_pessoal_consignado_inss_prefixado", name: "Consignado INSS", type: "daily", segmento: "pf" },
+  { slug: "aquisicao_de_veiculos_prefixado", name: "Aquisição de Veículos", type: "daily", segmento: "pf" },
+  { slug: "aquisicao_de_outros_bens_prefixado", name: "Aquisição de Outros Bens", type: "daily", segmento: "pf" },
+  { slug: "arrendamento_mercantil_de_veiculos_prefixado", name: "Arrendamento Mercantil de Veículos", type: "daily", segmento: "pf" },
+  { slug: "desconto_de_cheques_prefixado", name: "Desconto de Cheques", type: "daily", segmento: "pf" },
+  // ── Pessoa Física — imobiliário (mensal) ──
+  { slug: "financiamento_imobiliario_com_taxas_de_mercado_prefixado", name: "Imobiliário Mercado – Pré", type: "monthly", segmento: "pf" },
+  { slug: "financiamento_imobiliario_com_taxas_de_mercado_pos_fixado_referenciado_em_ipca", name: "Imobiliário Mercado – IPCA", type: "monthly", segmento: "pf" },
+  { slug: "financiamento_imobiliario_com_taxas_de_mercado_pos_fixado_referenciado_em_tr", name: "Imobiliário Mercado – TR", type: "monthly", segmento: "pf" },
+  { slug: "financiamento_imobiliario_com_taxas_reguladas_prefixado", name: "Imobiliário Regulado – Pré", type: "monthly", segmento: "pf" },
+  { slug: "financiamento_imobiliario_com_taxas_reguladas_pos_fixado_referenciado_em_ipca", name: "Imobiliário Regulado – IPCA", type: "monthly", segmento: "pf" },
+  { slug: "financiamento_imobiliario_com_taxas_reguladas_pos_fixado_referenciado_em_tr", name: "Imobiliário Regulado – TR", type: "monthly", segmento: "pf" },
+  // ── Pessoa Jurídica — diárias ──
+  { slug: "cheque_especial_prefixado", name: "Cheque Especial", type: "daily", segmento: "pj" },
+  { slug: "conta_garantida_prefixado", name: "Conta Garantida (Pré)", type: "daily", segmento: "pj" },
+  { slug: "conta_garantida_pos_fixado_referenciado_em_juros_flutuantes", name: "Conta Garantida (Pós)", type: "daily", segmento: "pj" },
+  { slug: "capital_de_giro_com_prazo_ate_365_dias_prefixado", name: "Cap. Giro ≤365d (Pré)", type: "daily", segmento: "pj" },
+  { slug: "capital_de_giro_com_prazo_ate_365_dias_pos_fixado_referenciado_em_juros_flutuant", name: "Cap. Giro ≤365d (Pós)", type: "daily", segmento: "pj" },
+  { slug: "capital_de_giro_com_prazo_superior_a_365_dias_prefixado", name: "Cap. Giro >365d (Pré)", type: "daily", segmento: "pj" },
+  { slug: "capital_de_giro_com_prazo_superior_a_365_dias_pos_fixado_referenciado_em_juros_f", name: "Cap. Giro >365d (Pós)", type: "daily", segmento: "pj" },
+  { slug: "desconto_de_duplicatas_prefixado", name: "Desconto de Duplicatas", type: "daily", segmento: "pj" },
+  { slug: "desconto_de_cheques_prefixado", name: "Desconto de Cheques", type: "daily", segmento: "pj" },
+  { slug: "antecipacao_de_faturas_de_cartao_de_credito_prefixado", name: "Antecipação de Faturas de Cartão", type: "daily", segmento: "pj" },
+  { slug: "vendor_prefixado", name: "Vendor", type: "daily", segmento: "pj" },
+  { slug: "adiantamento_sobre_contratos_de_cambio_acc_pos_fixado_referenciado_em_moeda_estr", name: "ACC (moeda estrangeira)", type: "daily", segmento: "pj" },
 ];
 
 // ─────────────────────────────────────────────
