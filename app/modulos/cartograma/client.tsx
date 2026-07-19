@@ -5,7 +5,7 @@ import DorlingCartogram from "@/components/charts/DorlingCartogram";
 import { SkeletonBox } from "@/components/ui/Skeleton";
 import { formatBRL } from "@/lib/formatting";
 import { REGION_CENTROIDS } from "@/lib/constants";
-import type { IFDataResponse } from "@/lib/types";
+import type { IFDataResponse, QuarterResponse } from "@/lib/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -27,6 +27,11 @@ export default function CartogramaClient() {
       dedupingInterval: 300000,
     })
   );
+
+  const { data: quarterData } = useSWR<QuarterResponse>("/api/quarter", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 3600000,
+  });
 
   const isLoading = results.some((r) => r.isLoading);
 
@@ -74,7 +79,7 @@ export default function CartogramaClient() {
   return (
     <>
       {/* Summary metrics */}
-      <div className="mb-4 grid grid-cols-3 gap-3">
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="metric-card">
           <div className="metric-label">Crédito Total</div>
           <div className="metric-value">{formatBRL(grandTotal)}</div>
@@ -90,6 +95,10 @@ export default function CartogramaClient() {
         <div className="metric-card">
           <div className="metric-label">Regiões</div>
           <div className="metric-value">{regionData.length}</div>
+        </div>
+        <div className="metric-card">
+          <div className="metric-label">Período</div>
+          <div className="metric-value">{quarterData?.label ?? "—"}</div>
         </div>
       </div>
 

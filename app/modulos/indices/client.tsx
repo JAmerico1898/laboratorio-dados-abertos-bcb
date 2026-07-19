@@ -9,7 +9,7 @@ import { SkeletonBox } from "@/components/ui/Skeleton";
 import SegmentPill from "@/components/ui/SegmentPill";
 import { INDICES, DEFAULT_SEGMENTS } from "@/lib/constants";
 import { formatBRL, formatPct } from "@/lib/formatting";
-import type { Segment, IndicesResponse } from "@/lib/types";
+import type { Segment, IndicesResponse, QuarterResponse } from "@/lib/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -61,6 +61,11 @@ export default function IndicesClient() {
   const { data, isLoading } = useSWR<IndicesResponse>(apiUrl, fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 300000,
+  });
+
+  const { data: quarterData } = useSWR<QuarterResponse>("/api/quarter", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 3600000,
   });
 
   const indexDef = INDICES.find((i) => i.key === selectedIndex);
@@ -120,7 +125,7 @@ export default function IndicesClient() {
       {selectedIndex && data && indexDef && (
         <>
           {/* Metrics */}
-          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
             <div className="metric-card">
               <div className="metric-label">Mediana</div>
               <div className="metric-value">
@@ -144,6 +149,10 @@ export default function IndicesClient() {
             <div className="metric-card">
               <div className="metric-label">Índice</div>
               <div className="metric-value text-base">{indexDef.label}</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-label">Período</div>
+              <div className="metric-value">{quarterData?.label ?? "—"}</div>
             </div>
           </div>
 
