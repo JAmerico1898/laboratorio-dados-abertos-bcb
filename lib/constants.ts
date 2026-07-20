@@ -130,6 +130,8 @@ export const BANK_SHORT_NAMES: Record<string, string> = {
   "BCO BRADESCO S.A.": "Bradesco",
   "ITAÚ UNIBANCO S.A.": "Itaú",
   "CAIXA ECONOMICA FEDERAL": "Caixa",
+  "CAIXA ECONÔMICA FEDERAL": "Caixa",
+  ITAU: "Itaú",
   "BCO SANTANDER (BRASIL) S.A.": "Santander",
   "BCO BTG PACTUAL S.A.": "BTG Pactual",
   "BCO SAFRA S.A.": "Safra",
@@ -177,14 +179,18 @@ export const RELATORIO_CREDITO_GEO = 9;
 export const RELATORIO_CREDITO_PF = 11;
 export const RELATORIO_CREDITO_PJ = 13;
 
-// TipoInstituicao selection after BCB's 2026 IF.data restructuring.
-// Consolidated "Conglomerado Prudencial" values (Resumo/Ativo/Passivo/DRE) are
-// now reported under the lead institution's CNPJ8 code at tipo=3. The old "C..."
-// conglomerate codes and the everything-bundled tipo=1 view were removed.
+// TipoInstituicao in the public OData IF.data API:
+//   1 = Conglomerados Prudenciais e Instituições Independentes ("C..." codes)
+//   2 = Conglomerados Financeiros
+//   3 = Instituições Individuais (keyed by CNPJ8)
+// The standard reports (Resumo/Ativo/Passivo/DRE) must read tipo=1: that is the
+// consolidated view the IF.data site shows, with one row per conglomerate
+// (e.g. "ITAU - PRUDENCIAL"). tipo=3 lists every legal entity separately, which
+// both splits conglomerates apart and understates each group's totals.
 // Credit reports (Geo/PF/PJ) are not published at prudential level by the public
 // OData API, so they are sourced from the IF.data internal API (type id 1009)
 // and stored as valores_{q}_t1009_r{9,11,13}.parquet.
-export const TIPO_PRUDENCIAL = 3;
+export const TIPO_PRUDENCIAL = 1;
 export const TIPO_CREDITO = 1009;
 
 export const TIPO_INSTITUICAO_TODAS = [1, 2, 3];

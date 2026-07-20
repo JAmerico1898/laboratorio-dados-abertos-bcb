@@ -10,7 +10,6 @@ import {
   filterBySegments,
   computeSummary,
 } from "@/lib/data";
-import { getLastNQuarters } from "@/lib/formatting";
 import {
   VAR_KEY_MAP,
   MODULO3_VARS,
@@ -89,8 +88,7 @@ export async function GET(
     }
 
     if (annualized) {
-      const quarters = getLastNQuarters(quarter, 4);
-      data = await extractVariableAnnualized(quarters, report, nomeColuna, institutions);
+      data = await extractVariableAnnualized(quarter, report, nomeColuna, institutions);
     } else {
       data = await extractVariable(quarter, TIPO_PRUDENCIAL, report, nomeColuna, institutions);
     }

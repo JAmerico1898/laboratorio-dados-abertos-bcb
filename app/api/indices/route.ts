@@ -8,7 +8,6 @@ import {
   filterBySegments,
   applyMaterialityFilter,
 } from "@/lib/data";
-import { getLastNQuarters } from "@/lib/formatting";
 import {
   RELATORIO_RESUMO,
   RELATORIO_ATIVO,
@@ -47,8 +46,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const quarters = getLastNQuarters(quarter, 4);
-
   // Helper to get a variable from a report
   const getVar = async (
     nomeColuna: string,
@@ -57,7 +54,7 @@ export async function GET(request: NextRequest) {
   ) => extractVariable(quarter, tipo, relatorio, nomeColuna, institutions);
 
   const getVarAnnualized = async (nomeColuna: string, relatorio: number) =>
-    extractVariableAnnualized(quarters, relatorio, nomeColuna, institutions);
+    extractVariableAnnualized(quarter, relatorio, nomeColuna, institutions);
 
   // Convert array of InstitutionRow to Map<CodInst, Saldo>
   const toMap = (rows: InstitutionRow[]) =>

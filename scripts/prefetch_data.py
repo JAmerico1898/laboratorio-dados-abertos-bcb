@@ -47,7 +47,7 @@ def find_latest_quarter_raw():
             y -= 1
 
     for anomes in candidates:
-        for tipo in [3, 1, 2]:
+        for tipo in [1]:
             try:
                 df = ep.get(AnoMes=anomes, TipoInstituicao=tipo, Relatorio=1)
                 if df is not None and not df.empty:
@@ -80,6 +80,9 @@ def fetch_and_save_valores(ep, anomes, tipo, relatorio, max_retries=3):
         try:
             df = ep.get(AnoMes=anomes, TipoInstituicao=tipo, Relatorio=relatorio)
             if df is not None and not df.empty:
+                # The OData pagination occasionally repeats pages, which would
+                # multiply any summed column. Rows are unique by construction.
+                df = df.drop_duplicates()
                 df.to_parquet(fpath, index=False)
                 log.info(f"  Saved {fname} ({len(df)} rows)")
                 return True
@@ -221,7 +224,10 @@ def main():
     # 1. Find latest quarter
     log.info("Step 1: Finding latest quarter...")
     latest = find_latest_quarter_raw()
-    quarters = get_last_n_quarters(latest, n=4)
+    # 5 quarters: the DRE accumulates within the semester, so a 12-month window
+    # ending in Q1/Q3 also needs the same quarter of the previous year
+    # (see dreAnnualWindow in lib/data.ts).
+    quarters = get_last_n_quarters(latest, n=5)
     log.info(f"  Latest: {latest}, Quarters: {quarters}")
 
     # 2. Setup API
@@ -244,21 +250,16 @@ def main():
             f"latest_quarter.txt; app keeps serving the last complete quarter."
         )
 
-    # 4. Valores — standard reports use tipo=3 (Conglomerado Prudencial).
-    # After BCB's 2026 IF.data restructuring the consolidated values are keyed
-    # by the lead institution's CNPJ8 and only appear under tipo=3 (the old
-    # "C..." conglomerate codes and the bundled tipo=1 view were removed).
+    # 4. Valores — standard reports use tipo=1 (Conglomerados Prudenciais e
+    # Instituicoes Independentes), the consolidated view the IF.data site shows.
+    # tipo=3 is the individual-entity view: it splits conglomerates into their
+    # members and understates each group's totals.
     standard_reports = [(1, "Resumo"), (2, "Ativo"), (3, "Passivo"), (4, "DRE")]
-    log.info(f"Step 3: Fetching Valores tipo=3 (standard reports, {latest})...")
+    log.info(f"Step 3: Fetching Valores tipo=1 (standard reports, {latest})...")
     for rel, name in standard_reports:
         log.info(f"  Relatorio {rel} ({name})...")
-        fetch_and_save_valores(ep_val, latest, tipo=3, relatorio=rel)
+        fetch_and_save_valores(ep_val, latest, tipo=1, relatorio=rel)
         time.sleep(1)
-
-    # 5. Resumo (r1) at tipo=1 carries the "Índice de Basileia" capital ratio,
-    # which is not present in the consolidated tipo=3 Resumo.
-    log.info(f"Step 4: Fetching Valores tipo=1 Resumo (Basileia, {latest})...")
-    fetch_and_save_valores(ep_val, latest, tipo=1, relatorio=1)
 
     # 6. Credit reports (Geo/PF/PJ) are not published at the Conglomerado
     # Prudencial level by the public OData API, so they are reconstructed from
@@ -270,12 +271,12 @@ def main():
     except Exception as e:
         log.error(f"  Credit fetch failed: {e}")
 
-    # 6. Previous quarters (annualization: Resumo + DRE, tipo=3)
+    # 6. Previous quarters (annualization: Resumo + DRE, tipo=1)
     log.info("Step 5: Previous quarters for annualization...")
     for q in quarters[1:]:
         log.info(f"  Quarter {q}:")
         for rel in [1, 4]:
-            fetch_and_save_valores(ep_val, q, tipo=3, relatorio=rel)
+            fetch_and_save_valores(ep_val, q, tipo=1, relatorio=rel)
             time.sleep(1)
 
     # 7. Taxas de Juros

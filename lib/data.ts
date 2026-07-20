@@ -207,13 +207,13 @@ export async function buildInstitutionTable(
     }))
     .filter((row) => row.Segmento !== "Outros");
 
-  // BCB restructured IF.data: consolidated (Conglomerado Prudencial) values are
-  // now reported under the lead institution's CNPJ8 code (e.g. "60701190"),
-  // not the old "C..." conglomerate codes. Keep the CNPJ8-keyed rows and drop
-  // the legacy "C..." registry entries, which no longer appear in the valores.
-  const individuals = withSegment.filter(
-    (row) => !String(row.CodInst).startsWith("C")
-  );
+  // The registry lists every legal entity, including the members of each
+  // conglomerate (which inherit the group's Sr segment). The consolidated
+  // valores (tipo=1) only carry the conglomerate lead ("C..." codes) and the
+  // independent institutions, so the join in extractVariable drops the members.
+  // Keeping every row here would be harmless were it not for the join, so the
+  // universe is defined by the valores, not by a name/code heuristic.
+  const individuals = withSegment;
 
   if (individuals.length === 0) return [];
 
@@ -374,8 +374,36 @@ export async function extractVariable(
 // Ported from data_utils.py:extract_variable_annualized()
 // ─────────────────────────────────────────────
 
+/**
+ * The published DRE figures accumulate within the *semester*, not the quarter:
+ * Mar = Q1, Jun = H1 (Q1+Q2), Sep = Q3, Dec = H2 (Q3+Q4). A 12-month window is
+ * therefore a signed combination of published figures — summing the last four
+ * quarters double-counts the two semester figures.
+ */
+export function dreAnnualWindow(
+  anomes: number
+): { anomes: number; sign: number }[] {
+  const year = Math.floor(anomes / 100);
+  const q = (y: number, m: number, sign: number) => ({ anomes: y * 100 + m, sign });
+
+  switch (anomes % 100) {
+    // Q1 + Q4(-1) + Q3(-1) + Q2(-1) = Mar + H2(-1) + [H1(-1) - Q1(-1)]
+    case 3:
+      return [q(year, 3, 1), q(year - 1, 12, 1), q(year - 1, 6, 1), q(year - 1, 3, -1)];
+    // H1 + H2(-1)
+    case 6:
+      return [q(year, 6, 1), q(year - 1, 12, 1)];
+    // Q3 + H1 + Q4(-1) = Sep + Jun + [H2(-1) - Q3(-1)]
+    case 9:
+      return [q(year, 9, 1), q(year, 6, 1), q(year - 1, 12, 1), q(year - 1, 9, -1)];
+    // H2 + H1
+    default:
+      return [q(year, 12, 1), q(year, 6, 1)];
+  }
+}
+
 export async function extractVariableAnnualized(
-  anomesList: number[],
+  anomes: number,
   relatorio: number,
   nomeColuna: string,
   institutions: InstitutionBase[]
@@ -385,16 +413,21 @@ export async function extractVariableAnnualized(
   const instMap = new Map(institutions.map((i) => [i.CodInst, i]));
   const sums = new Map<number, number>();
 
-  for (const anomes of anomesList) {
+  for (const term of dreAnnualWindow(anomes)) {
     const extracted = await extractVariable(
-      anomes,
+      term.anomes,
       TIPO_PRUDENCIAL,
       relatorio,
       nomeColuna,
       institutions
     );
+    if (extracted.length === 0) {
+      console.warn(
+        `[annualized] missing DRE term ${term.anomes} (r${relatorio}) — 12-month totals will be wrong`
+      );
+    }
     for (const row of extracted) {
-      sums.set(row.CodInst, (sums.get(row.CodInst) ?? 0) + row.Saldo);
+      sums.set(row.CodInst, (sums.get(row.CodInst) ?? 0) + term.sign * row.Saldo);
     }
   }
 
