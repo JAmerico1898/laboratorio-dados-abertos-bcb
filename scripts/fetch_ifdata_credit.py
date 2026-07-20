@@ -144,32 +144,6 @@ def fetch_credit(anomes, data_dir, log=None):
         df.to_parquet(fname, index=False)
         _log(f"    Saved r{app_num} ({len(df)} rows, {df['CodInst'].nunique() if len(df) else 0} institutions)")
 
-    # ── Report 115 "Informações de Capital" → Índice de Basileia (app r5) ──
-    # The public OData Resumo (tipo=1) has no big banks; the Prudencial Basel
-    # index lives only in this internal report. Written as a plain value column.
-    trel115 = _fetch_json(anomes, f"trel{anomes}_115.json")
-
-    def _find_leaf(cols):
-        for c in cols:
-            ie = info_by_id.get(c.get("ifd"), {})
-            if ie.get("td") == 3 and ie.get("n", "").startswith("Índice de Basileia"):
-                return ie
-            found = _find_leaf(c.get("sc") or [])
-            if found:
-                return found
-        return None
-
-    basileia = _find_leaf(trel115["c"])
-    rows = []
-    if basileia:
-        for cstr, cint in codes:
-            v = find(basileia["a"], cint, basileia["lid"])
-            if v is not None:
-                rows.append({"CodInst": cstr, "NomeColuna": "Índice de Basileia", "Saldo": float(v)})
-    df = pd.DataFrame(rows)
-    fname = f"{data_dir}/valores_{anomes}_t{CREDIT_TIPO}_r5.parquet"
-    df.to_parquet(fname, index=False)
-    _log(f"    Saved r5 basileia ({len(df)} rows, {df['CodInst'].nunique() if len(df) else 0} institutions)")
     return True
 
 

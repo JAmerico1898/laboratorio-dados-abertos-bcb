@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getLatestQuarter,
   buildInstitutionTable,
-  buildCreditInstitutionTable,
   extractVariable,
   extractVariableAnnualized,
   filterBySegments,
@@ -14,7 +13,6 @@ import {
   RELATORIO_RESULTADO,
   INDICES,
   TIPO_PRUDENCIAL,
-  TIPO_CREDITO,
 } from "@/lib/constants";
 import type { InstitutionRow } from "@/lib/types";
 
@@ -65,26 +63,17 @@ export async function GET(request: NextRequest) {
   // Compute the requested index
   switch (indexKey) {
     case "basileia": {
-      // The Prudencial Basel ratio (with the big banks) is absent from the public
-      // OData Resumo; it comes from the IF.data internal report 115 (tipo=1009),
-      // written to r5 by scripts/fetch_ifdata_credit.py. Its institution registry
-      // is the credit/prudential cadastro, not the tipo=3 one used by getVar, and
-      // the CNPJ8 materiality filter doesn't apply to prudential codes.
-      const creditInstitutions = await buildCreditInstitutionTable(quarter);
-      const data = await extractVariable(
-        quarter,
-        TIPO_CREDITO,
-        5,
-        "Índice de Basileia",
-        creditInstitutions
+      // The Resumo (tipo=1) carries the Prudencial Basel ratio directly, as a
+      // fraction (0.1477); the other "pct" indices are already in percentage
+      // points, so scale to match.
+      const data = filterBySegments(
+        await getVar("Índice de Basileia", RELATORIO_RESUMO),
+        segments
       );
-      const filtered = filterBySegments(data, segments);
-      result = filtered.map((d) => ({
+      result = data.map((d) => ({
         CodInst: d.CodInst,
         NomeReduzido: d.NomeReduzido,
         Segmento: d.Segmento,
-        // BCB reports Basileia as a fraction (0.237); the other "pct" indices are
-        // already scaled to percentage points, so scale this to match.
         value: d.Saldo * 100,
       }));
       break;
@@ -187,17 +176,13 @@ export async function GET(request: NextRequest) {
     }
 
     case "eficiencia": {
+      // Cobertura das despesas de estrutura pelas rendas de serviços:
+      // (Rendas de Serviços + Tarifas) / (Despesas de Pessoal + Administrativas).
       const despPessoal = toMap(
         await getVarAnnualized("Despesas de Pessoal \n(d3)", RELATORIO_RESULTADO)
       );
       const despAdmin = toMap(
         await getVarAnnualized("Despesas Administrativas \n(d4)", RELATORIO_RESULTADO)
-      );
-      const resultIntermed = toMap(
-        await getVarAnnualized(
-          "Resultado de Intermediação Financeira \n(c) = (a) + (b)",
-          RELATORIO_RESULTADO
-        )
       );
       const rendServicos = toMap(
         await getVarAnnualized(
@@ -209,32 +194,21 @@ export async function GET(request: NextRequest) {
         await getVarAnnualized("Rendas de Tarifas Bancárias \n(d2)", RELATORIO_RESULTADO)
       );
 
-      const instBase = await buildInstitutionTable(quarter);
-      const instMap = new Map(instBase.map((i) => [i.CodInst, i]));
-
-      result = [];
-      for (const [codInst, inst] of instMap) {
-        const numerator =
-          Math.abs(despPessoal.get(codInst) ?? 0) +
-          Math.abs(despAdmin.get(codInst) ?? 0);
-        const denominator =
-          Math.abs(resultIntermed.get(codInst) ?? 0) +
-          Math.abs(rendServicos.get(codInst) ?? 0) +
-          Math.abs(rendTarifas.get(codInst) ?? 0);
-
-        if (denominator === 0) continue;
-        const value = (numerator / denominator) * 100;
-        if (!isFinite(value)) continue;
-
-        if (segments.length > 0 && !segments.includes(inst.Segmento)) continue;
-
-        result.push({
-          CodInst: codInst,
-          NomeReduzido: inst.NomeReduzido,
-          Segmento: inst.Segmento,
-          value,
-        });
+      const numerator = new Map<number, number>();
+      const denominator = new Map<number, number>();
+      for (const inst of institutions) {
+        numerator.set(
+          inst.CodInst,
+          Math.abs(rendServicos.get(inst.CodInst) ?? 0) +
+            Math.abs(rendTarifas.get(inst.CodInst) ?? 0)
+        );
+        denominator.set(
+          inst.CodInst,
+          Math.abs(despPessoal.get(inst.CodInst) ?? 0) +
+            Math.abs(despAdmin.get(inst.CodInst) ?? 0)
+        );
       }
+      result = computeRatio(numerator, denominator, institutions, segments, 100);
       break;
     }
   }

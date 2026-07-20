@@ -556,8 +556,8 @@ export const INDICES: IndexDef[] = [
     category: "resultado",
     unit: "pct",
     description:
-      "(Despesas Pessoal + Despesas Admin) / (Resultado Intermediação + Serviços + Tarifas)",
-    higherIsBetter: false,
+      "(Rendas de Serviços + Tarifas) / (Despesas Pessoal + Despesas Admin)",
+    higherIsBetter: true,
   },
 ];
 
