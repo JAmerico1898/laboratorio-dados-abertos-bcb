@@ -160,14 +160,6 @@ export const BANK_SHORT_NAMES: Record<string, string> = {
   "BCO MERCANTIL DO BRASIL S.A.": "Mercantil",
 };
 
-export function getShortName(fullName: string): string {
-  if (fullName in BANK_SHORT_NAMES) {
-    return BANK_SHORT_NAMES[fullName];
-  }
-  const name = fullName.replace("BCO ", "").replace("S.A.", "").trim();
-  return name.length > 20 ? name.slice(0, 20) : name;
-}
-
 // ─────────────────────────────────────────────
 // IF.DATA REPORT NUMBERS
 // ─────────────────────────────────────────────

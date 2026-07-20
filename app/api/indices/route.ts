@@ -5,7 +5,7 @@ import {
   extractVariable,
   extractVariableAnnualized,
   filterBySegments,
-  applyMaterialityFilter,
+  filterMaterialInstitutions,
 } from "@/lib/data";
 import {
   RELATORIO_RESUMO,
@@ -36,7 +36,12 @@ export async function GET(request: NextRequest) {
   }
 
   const quarter = getLatestQuarter();
-  const institutions = await buildInstitutionTable(quarter);
+  // Ratios start from the same material universe as the treemap modules;
+  // otherwise micro-entities dominate the distribution and the medians.
+  const institutions = await filterMaterialInstitutions(
+    quarter,
+    await buildInstitutionTable(quarter)
+  );
   if (institutions.length === 0) {
     return NextResponse.json(
       { institutions: [], median: 0, mean: 0, count: 0, index: indexKey },
@@ -129,10 +134,7 @@ export async function GET(request: NextRequest) {
 
     case "pl_ajustado": {
       const data = await getVar("Patrimônio Líquido", RELATORIO_RESUMO);
-      const filtered = filterBySegments(
-        await applyMaterialityFilter(data, quarter, institutions),
-        segments
-      );
+      const filtered = filterBySegments(data, segments);
       result = filtered.map((d) => ({
         CodInst: d.CodInst,
         NomeReduzido: d.NomeReduzido,

@@ -519,14 +519,15 @@ export async function extractCreditVariable(
 // Ported from data_utils.py:apply_materiality_filter()
 // ─────────────────────────────────────────────
 
-export async function applyMaterialityFilter(
-  data: InstitutionRow[],
+/**
+ * Institutions that clear the materiality thresholds (Ativo Total and PL).
+ * Reads the consolidated prudential Resumo. Returns null when the Resumo is
+ * unavailable, so callers can fall back to not filtering at all.
+ */
+async function getMaterialCodes(
   anomes: number,
   institutions: InstitutionBase[]
-): Promise<InstitutionRow[]> {
-  if (data.length === 0) return data;
-
-  // Read resumo data for Ativo Total and PL (consolidated prudential view)
+): Promise<Set<number> | null> {
   const resumoFile = `valores_${anomes}_t${TIPO_PRUDENCIAL}_r1.parquet`;
   const resumoRows = await readParquet<{
     CodInst: number;
@@ -551,17 +552,38 @@ export async function applyMaterialityFilter(
     }
   }
 
-  if (validByAtivo.size === 0 && validByPL.size === 0) {
-    return data.filter((d) => d.Saldo !== 0);
-  }
+  if (validByAtivo.size === 0 && validByPL.size === 0) return null;
 
   // Both conditions must be met (intersection)
-  return data.filter(
-    (d) =>
-      validByAtivo.has(d.CodInst) &&
-      validByPL.has(d.CodInst) &&
-      d.Saldo !== 0
-  );
+  return new Set([...validByAtivo].filter((code) => validByPL.has(code)));
+}
+
+export async function applyMaterialityFilter(
+  data: InstitutionRow[],
+  anomes: number,
+  institutions: InstitutionBase[]
+): Promise<InstitutionRow[]> {
+  if (data.length === 0) return data;
+
+  const material = await getMaterialCodes(anomes, institutions);
+  if (material === null) return data.filter((d) => d.Saldo !== 0);
+
+  return data.filter((d) => material.has(d.CodInst) && d.Saldo !== 0);
+}
+
+/**
+ * Same materiality rule, applied to the institution universe itself. The
+ * indices are ratios, so they have no Saldo to filter after the fact — they
+ * have to start from a material universe or micro-entities produce absurd
+ * values (Basileia in the thousands of percent).
+ */
+export async function filterMaterialInstitutions(
+  anomes: number,
+  institutions: InstitutionBase[]
+): Promise<InstitutionBase[]> {
+  const material = await getMaterialCodes(anomes, institutions);
+  if (material === null) return institutions;
+  return institutions.filter((i) => material.has(i.CodInst));
 }
 
 // ─────────────────────────────────────────────
