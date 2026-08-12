@@ -41,7 +41,9 @@ export async function GET(request: NextRequest) {
     results.push({
       modName: mod.name,
       rate: entry.rateYear,
-      rank: entry.rank,
+      // Stored ranks are ascending (1 = lowest rate). Here the position is
+      // reported by descending rate, so 1 = highest rate charged.
+      rank: mod.total - entry.rank + 1,
       total: mod.total,
     });
   }

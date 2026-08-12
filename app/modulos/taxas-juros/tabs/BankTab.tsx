@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SkeletonBox } from "@/components/ui/Skeleton";
 
 interface BankModality {
@@ -16,6 +16,43 @@ export default function BankTab({ segment }: { segment: "pf" | "pj" }) {
   const [selectedBank, setSelectedBank] = useState("");
   const [bankData, setBankData] = useState<BankModality[]>([]);
   const [loadingBank, setLoadingBank] = useState(false);
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  // Accent-insensitive match, so "itau" finds "ITAÚ UNIBANCO S.A."
+  const normalize = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+  const needle = normalize(query.trim());
+  const suggestions = banks
+    .filter((b) => normalize(b).includes(needle))
+    .slice(0, 50);
+
+  // Reset the search box when the PF/PJ segment changes
+  useEffect(() => {
+    setQuery("");
+    setSelectedBank("");
+    setOpen(false);
+  }, [segment]);
+
+  // Close the suggestion list on an outside click
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [open]);
+
+  const pick = (name: string) => {
+    setSelectedBank(name);
+    setQuery(name);
+    setOpen(false);
+  };
 
   // Fetch bank list once (server caches it)
   useEffect(() => {
@@ -66,22 +103,64 @@ export default function BankTab({ segment }: { segment: "pf" | "pj" }) {
 
   return (
     <>
-      <div className="mb-4">
-        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-text-muted">
+      <div className="relative mb-4" ref={boxRef}>
+        <label
+          htmlFor="taxas-bank-search"
+          className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-text-muted"
+        >
           Selecione o banco:
         </label>
-        <select
-          value={selectedBank}
-          onChange={(e) => setSelectedBank(e.target.value)}
-          className="w-full rounded-[10px] border border-border bg-bg-card px-4 py-2.5 text-sm text-text-primary focus:border-accent-cyan focus:outline-none"
-        >
-          <option value="">Selecione um banco...</option>
-          {banks.map((b) => (
-            <option key={b} value={b}>
-              {b}
-            </option>
-          ))}
-        </select>
+        <input
+          id="taxas-bank-search"
+          type="text"
+          role="combobox"
+          aria-expanded={open}
+          aria-autocomplete="list"
+          autoComplete="off"
+          value={query}
+          placeholder="Digite para buscar um banco..."
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+            if (selectedBank) setSelectedBank("");
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && suggestions.length > 0) {
+              e.preventDefault();
+              pick(suggestions[0]);
+            } else if (e.key === "Escape") {
+              setOpen(false);
+            }
+          }}
+          className="w-full rounded-[10px] border border-border bg-bg-card px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent-cyan focus:outline-none focus:ring-2 focus:ring-accent-cyan/15"
+        />
+        {open && (
+          <ul
+            role="listbox"
+            className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-[10px] border border-border bg-bg-card shadow-lg"
+          >
+            {suggestions.length > 0 ? (
+              suggestions.map((b) => (
+                <li key={b}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={b === selectedBank}
+                    onClick={() => pick(b)}
+                    className="block w-full border-b border-border/50 px-4 py-2 text-left text-sm text-text-primary last:border-b-0 hover:bg-accent-cyan/10"
+                  >
+                    {b}
+                  </button>
+                </li>
+              ))
+            ) : (
+              <li className="px-4 py-2 text-sm text-text-muted">
+                Nenhum banco encontrado.
+              </li>
+            )}
+          </ul>
+        )}
       </div>
 
       {selectedBank && (
