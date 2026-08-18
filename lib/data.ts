@@ -157,6 +157,54 @@ export function classifySegment(row: CadastroRow): string {
 // SHORT NAME
 // ─────────────────────────────────────────────
 
+/**
+ * Cooperatives carry long boilerplate legal names ("COOPERATIVA DE CRÉDITO,
+ * POUPANÇA E INVESTIMENTO VALE DO PIQUIRI ABCD - SICREDI VALE DO PIQUIRI
+ * ABCD PR/SP"). A head truncation keeps only the boilerplate, so the S4
+ * treemap ends up with dozens of tiles all reading "COOPERATIVA DE CRÉDI".
+ * Keep the kind prefix and the distinctive tail instead.
+ */
+const COOP_PREFIXES: Array<[RegExp, string]> = [
+  [/^COOPERATIVA/i, "COOP"],
+  [/^CENTRAL/i, "CENTRAL"],
+  [/^CONFEDERA/i, "CONFED"],
+];
+
+const COOP_BOILERPLATE = new Set([
+  "COOPERATIVA", "COOPERATIVAS", "CENTRAL", "CONFEDERACAO", "CONFEDERAÇÃO",
+  "NACIONAL", "DE", "DA", "DAS", "DO", "DOS", "E", "CREDITO", "CRÉDITO",
+  "ECONOMIA", "MUTUO", "MÚTUO", "POUPANCA", "POUPANÇA", "INVESTIMENTO",
+  "LIVRE", "ADMISSAO", "ADMISSÃO", "ASSOCIADOS",
+]);
+
+const COOP_TAIL_MAX = 24;
+
+function coopShortName(fullName: string): string | null {
+  const prefix = COOP_PREFIXES.find(([re]) => re.test(fullName))?.[1];
+  if (!prefix) return null;
+
+  const clean = fullName
+    .replace(/\s+/g, " ")
+    .replace(/\s*LTDA\.?$/i, "")
+    .trim();
+
+  let tail: string;
+  if (/\s[-–]\s/.test(clean)) {
+    // The brand lives after the last " - " separator.
+    tail = clean.split(/\s[-–]\s/).pop()!.trim();
+  } else {
+    // No separator: drop the leading boilerplate words instead.
+    const words = clean.split(" ");
+    let i = 0;
+    while (i < words.length && COOP_BOILERPLATE.has(words[i].toUpperCase())) i++;
+    tail = words.slice(i).join(" ");
+  }
+
+  if (!tail) return prefix;
+  if (tail.length > COOP_TAIL_MAX) tail = tail.slice(0, COOP_TAIL_MAX).trim();
+  return `${prefix} ${tail}`;
+}
+
 export function getShortName(fullName: string): string {
   if (fullName in BANK_SHORT_NAMES) {
     return BANK_SHORT_NAMES[fullName];
@@ -167,6 +215,9 @@ export function getShortName(fullName: string): string {
   if (normalized in BANK_SHORT_NAMES) {
     return BANK_SHORT_NAMES[normalized];
   }
+  const coop = coopShortName(fullName);
+  if (coop) return coop;
+
   const name = fullName
     .replace(/^BANCO /, "")
     .replace("BCO ", "")

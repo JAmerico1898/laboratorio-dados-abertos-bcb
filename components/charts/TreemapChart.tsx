@@ -30,7 +30,11 @@ export default function TreemapChart({
     );
   }
 
-  // Build treemap data: root → segments → institutions
+  // Build treemap data: root → segments → institutions.
+  // Plotly identifies nodes by `ids`; without them it falls back to `labels`,
+  // and NomeReduzido is truncated to 20 chars — 96 S4 cooperatives collapse
+  // into a single "COOPERATIVA DE CRÉDI" node and the layout breaks.
+  const ids: string[] = [];
   const labels: string[] = [];
   const parents: string[] = [];
   const values: number[] = [];
@@ -56,6 +60,7 @@ export default function TreemapChart({
   for (const seg of segments) {
     const segTotal = segTotals.get(seg) ?? 0;
     const pctOfSystem = systemTotal > 0 ? (segTotal / systemTotal) * 100 : 0;
+    ids.push(`seg-${seg}`);
     labels.push(seg);
     parents.push(rootLabel);
     values.push(segTotal);
@@ -73,8 +78,9 @@ export default function TreemapChart({
     const segTotal = segTotals.get(inst.Segmento) ?? 0;
     const pctOfSegment = segTotal > 0 ? (Math.abs(inst.Saldo) / segTotal) * 100 : 0;
 
+    ids.push(`inst-${inst.CodInst}`);
     labels.push(inst.NomeReduzido);
-    parents.push(inst.Segmento);
+    parents.push(`seg-${inst.Segmento}`);
     values.push(Math.abs(val));
     colors.push(SEGMENT_COLORS[inst.Segmento as Segment] ?? "#64748b");
     hovertext.push(
@@ -95,6 +101,7 @@ export default function TreemapChart({
         data={[
           {
             type: "treemap",
+            ids,
             labels,
             parents,
             values,
