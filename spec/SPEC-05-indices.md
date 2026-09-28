@@ -60,7 +60,7 @@ Server-side computation:
 
 ### NomeColuna values needed from each Relatório
 **Resumo (R1)**: "Ativo Total", "Carteira de Crédito", "Captações", "Patrimônio Líquido", "Índice de Basileia"
-**Ativo (R2)**: Any containing "Provisão" or "Perda Esperada" (sum for total provisions)
+**Ativo (R2)**: Any containing "Provisão" or "Perda Esperada" (sum for total provisions); denominator is Valor Contábil Bruto (e1)+(g1), not the net totals (e)+(g)
 **DRE (R4)**: "Resultado de Intermediação Financeira \n(c) = (a) + (b)", "Despesas de Captação \n(b1)", "Lucro Líquido \n(j) = (g) + (h) + (i)", "Despesas de Pessoal \n(d3)", "Despesas Administrativas \n(d4)", "Rendas de Prestação de Serviços \n(d1)", "Rendas de Tarifas Bancárias \n(d2)"
 
 ### Important: DRE conta names contain literal `\n`

@@ -93,16 +93,13 @@ export async function GET(request: NextRequest) {
 
     case "provisoes_pct_carteira": {
       // Provisões = Perda Esperada (e2) + Perda Esperada (g2) from Ativo report
-      // Denominator = Operações de Crédito (e) + Outras Op. Crédito (g) from Ativo report
+      // Denominator = Valor Contábil Bruto (e1) + (g1) from Ativo report. The
+      // totals (e) and (g) are net of Perda Esperada, so using them lets the
+      // ratio exceed 100% for heavily provisioned portfolios.
       const perdaE2 = toMap(await getVar("Perda Esperada \n(e2)", RELATORIO_ATIVO));
       const perdaG2 = toMap(await getVar("Perda Esperada \n(g2)", RELATORIO_ATIVO));
-      const opCredE = toMap(await getVar("Operações de Crédito \n(e)", RELATORIO_ATIVO));
-      const opCredG = toMap(
-        await getVar(
-          "Outras Operações com Características de Concessão de Crédito \n(g)",
-          RELATORIO_ATIVO
-        )
-      );
+      const opCredE = toMap(await getVar("Valor Contábil Bruto \n(e1)", RELATORIO_ATIVO));
+      const opCredG = toMap(await getVar("Valor Contábil Bruto \n(g1)", RELATORIO_ATIVO));
 
       // Sum numerator and denominator per institution
       const instBase = await buildInstitutionTable(quarter);
