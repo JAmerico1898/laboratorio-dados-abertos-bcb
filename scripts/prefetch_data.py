@@ -98,6 +98,45 @@ def fetch_and_save_valores(ep, anomes, tipo, relatorio, max_retries=3):
                 return False
 
 
+# Segments the app uses (see VALID_SR in lib/constants.ts).
+VALID_SR = {"S1", "S2", "S3", "S4", "S5"}
+
+# If a new cadastro has this share (or less) of the segmented institutions the
+# current file has, it is treated as a broken BCB publication and not saved.
+# On 2026-10-06 BCB served a cadastro_202606 where ~45% of the conglomerates
+# had lost their Sr (Daycoval, Goldman, BS2... vanished from S3 in the app).
+MIN_SEGMENT_RATIO = 0.90
+
+
+def count_segmented(df):
+    """Number of rows whose Sr is one of S1..S5."""
+    if "Sr" not in df.columns:
+        return 0
+    sr = df["Sr"].astype(str).str.strip().str.upper()
+    return int(sr.isin(VALID_SR).sum())
+
+
+def cadastro_looks_degraded(new_df, fpath):
+    """
+    Compare the freshly downloaded cadastro with the file already on disk.
+    Returns a message explaining the problem, or None if the new file is fine.
+    With no file on disk there is nothing to compare, so the new one is accepted.
+    """
+    if not fpath.exists():
+        return None
+    import pandas as pd
+    old_df = pd.read_parquet(fpath)
+    old_n = count_segmented(old_df)
+    new_n = count_segmented(new_df)
+    if old_n > 0 and new_n < MIN_SEGMENT_RATIO * old_n:
+        return (
+            f"{fpath.name}: new download has {new_n} institutions with a "
+            f"segment (S1-S5) against {old_n} in the current file "
+            f"({new_n / old_n:.0%}). Keeping the current file."
+        )
+    return None
+
+
 def fetch_and_save_cadastro(ep_cad, anomes, max_retries=3):
     fname = f"cadastro_{anomes}.parquet"
     fpath = DATA_DIR / fname
@@ -106,6 +145,15 @@ def fetch_and_save_cadastro(ep_cad, anomes, max_retries=3):
         try:
             df = ep_cad.get(AnoMes=anomes)
             if df is not None and not df.empty:
+                problem = cadastro_looks_degraded(df, fpath)
+                if problem:
+                    # "::warning::" makes the message show up in the
+                    # GitHub Actions run summary, not only in the log.
+                    log.warning(f"  {problem}")
+                    print(f"::warning::{problem}")
+                    # The quarter's cadastro is still available (the old one),
+                    # so the rest of the pipeline can go on normally.
+                    return True
                 df.to_parquet(fpath, index=False)
                 log.info(f"  Saved {fname} ({len(df)} rows)")
                 return True
